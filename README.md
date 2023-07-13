@@ -19,7 +19,7 @@ to\
 Additionally, ensure that the file also has this line:\
 `LidSwitchIgnoreInhibited=no`\
 Then restart the OS via:\
-`sudo service systemd-logind restart`\
+`sudo service systemd-logind restart`
 10. 
 
  
