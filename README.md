@@ -21,18 +21,3 @@ Additionally, ensure that the file also has this line:\
 `LidSwitchIgnoreInhibited=no`\
 Then restart the OS via:\
 `sudo service systemd-logind restart`
-10. How to update Proxmox without a subscription \
-`nano /etc/apt/sources.list` \
-add
-```
-# not for production use
-deb http://download.proxmox.com/debian buster pve-no-subscription
-```
-edit pve-enterprise.list
-```
-nano /etc/apt/sources.list.d/pve-enterprise.list
-```
-comment this line:
-```
-# deb https://enterprise.proxmox.com/debian/pve buster pve-enterprise
-```
