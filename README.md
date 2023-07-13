@@ -11,7 +11,7 @@ My setup media server step to step
 7. After the installation is complete, follow the commands below for the initial setup.
 8. Login command line as root user on Proxmox machine
 9. Keep the laptop always on when the screen is closed: \
-`nano /etc/systemd/logind.con`\
+`nano /etc/systemd/logind.conf`\
 modify the line\
 `#HandleLidSwitch=suspend`\
 to\
