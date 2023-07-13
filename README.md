@@ -10,16 +10,16 @@ My setup media server step to step
 6. Install proxmox following the instructions on the screen if still don't know how to do it, follow the instructions of this [video](https://youtu.be/u8E3-Zy9NvI)
 7. After the installation is complete, follow the commands below for the initial setup.
 8. Login command line as root user on Proxmox machine
-9. Keep the laptop always on when the screen is closed: 
-`nano /etc/systemd/logind.con`
-modify the line
-`#HandleLidSwitch=suspend`
-to
-`HandleLidSwitch=ignore`
-Additionally, ensure that the file also has this line:
-`LidSwitchIgnoreInhibited=no`
-Then restart the OS via:
-`sudo service systemd-logind restart`
+9. Keep the laptop always on when the screen is closed: \
+`nano /etc/systemd/logind.con`\
+modify the line\
+`#HandleLidSwitch=suspend`\
+to\
+`HandleLidSwitch=ignore`\
+Additionally, ensure that the file also has this line:\
+`LidSwitchIgnoreInhibited=no`\
+Then restart the OS via:\
+`sudo service systemd-logind restart`\
 10. 
 
  
