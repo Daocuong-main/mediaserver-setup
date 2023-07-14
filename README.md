@@ -1,8 +1,9 @@
 
+
 # mediaserver-setup
 My setup media server step to step
 
-# Proxmox setup
+## Proxmox setup
 1. Download [Proxmox VE ISO](https://www.proxmox.com/en/downloads)
 2. Boot ISO to USB using [Rufus](https://rufus.ie/en/) 
 3. Plug USB to machine and turn on it.
@@ -21,3 +22,7 @@ Additionally, ensure that the file also has this line:\
 `LidSwitchIgnoreInhibited=no`\
 Then restart the OS via:\
 `sudo service systemd-logind restart`
+## Create virtual machine
+1. Go to Datacenter -> pve01 -> local(pve01) -> ISO images -> Upload ISO to upload ubuntu server ISO
+![image](https://github.com/Daocuong-main/mediaserver-setup/assets/47266136/fa2d6237-ebbd-464e-9a24-bd7cad28f764)
+2. Then create a virtual machine according to the instructions as shown in the [video](https://youtu.be/xBUnV2rQ7do)
