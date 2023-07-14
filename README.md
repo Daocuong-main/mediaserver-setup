@@ -26,3 +26,29 @@ Then restart the OS via:\
 1. Go to Datacenter -> pve01 -> local(pve01) -> ISO images -> Upload ISO to upload ubuntu server ISO
 ![image](https://github.com/Daocuong-main/mediaserver-setup/assets/47266136/fa2d6237-ebbd-464e-9a24-bd7cad28f764)
 2. Then create a virtual machine according to the instructions as shown in the [video](https://youtu.be/xBUnV2rQ7do)
+3. After booting into ubuntu server, run apt update: `sudo apt update && sudo apt dist-upgrade`
+4. Check current ip address: `ip addr show`
+5. Edit 00-installer-config.yaml `sudo nano /etc/netplan/00-installer-config.yaml`
+6. Edit:
+```
+# This is the network config written by 'subiquity'
+network:
+  ethernets:
+    ens18:
+      dhcp4: true
+  version: 2                                                                                                      
+```
+to this:
+```
+# This is the network config written by 'subiquity'
+network:
+  ethernets:
+    ens18:
+      dhcp4: no
+      addresses: [192.168.1.10/24]
+      gateway4: 192.168.1.1
+      nameservers:
+            addresses: [123.23.23.23,123.26.26.26]
+  version: 2
+```
+7. `sudo netplan apply`
