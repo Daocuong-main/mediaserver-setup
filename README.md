@@ -1,5 +1,4 @@
 
-
 # mediaserver-setup
 My setup media server step to step
 
@@ -22,7 +21,8 @@ Additionally, ensure that the file also has this line:\
 `LidSwitchIgnoreInhibited=no`\
 Then restart the OS via:\
 `sudo service systemd-logind restart`
-## Create virtual machine
+## Ubuntu server setup
+### Create virtual machine
 1. Go to Datacenter -> pve01 -> local(pve01) -> ISO images -> Upload ISO to upload ubuntu server ISO
 ![image](https://github.com/Daocuong-main/mediaserver-setup/assets/47266136/fa2d6237-ebbd-464e-9a24-bd7cad28f764)
 2. Then create a virtual machine according to the instructions as shown in the [video](https://youtu.be/xBUnV2rQ7do)
@@ -52,3 +52,43 @@ network:
   version: 2
 ```
 7. `sudo netplan apply`
+### Install some stuff
+1. Install Git
+`sudo apt update` \
+`sudo apt install git`
+2. Insall [Docker engine](https://docs.docker.com/engine/install/ubuntu/)
+### Make sure the device runs at maximum bandwidth
+To perform an iperf test between a Linux machine (client) and a Windows machine (server), you'll need to follow these steps:
+
+1. Set up the server-side (Windows machine):
+   - Download the iperf utility for Windows from the official website: https://iperf.fr/iperf-download.php#windows
+   - Extract the downloaded file to a directory on your Windows machine.
+   - Open a command prompt window with administrator privileges.
+   - Navigate to the directory where you extracted iperf.
+   - Run the following command to start iperf in server mode:
+     ```
+     iperf3.exe -s
+     ```
+
+2. Set up the client-side (Linux machine):
+   - Open a terminal on your Linux machine.
+   - Install iperf using the appropriate package manager for your Linux distribution. For example, on Debian or Ubuntu, you can use the following command:
+     ```
+     sudo apt-get install iperf3
+     ```
+   - Once installed, run the following command to test the network speed to the Windows server:
+     ```
+     iperf3 -c <server-ip>
+     ```
+     Replace `<server-ip>` with the IP address or hostname of your Windows machine.
+
+   - Wait for the test to complete. It will provide you with the network speed results.
+
+It's worth noting that Windows machines may have built-in firewall settings that could block iperf traffic. Therefore, ensure that the Windows firewall allows iperf traffic or temporarily disable the firewall during the test. Additionally, keep in mind that the network speed you measure with iperf may depend on various factors, including network congestion, hardware limitations, and other network traffic on your local network.
+### Otherwise run the following command
+```
+sudo apt-get install ethtool
+sudo ethtool -s eth0 speed 1000 duplex full
+sudo ethtool eth0
+```
+eth0 is the ethernet interface of the current machine using `ip addr show` to know.
