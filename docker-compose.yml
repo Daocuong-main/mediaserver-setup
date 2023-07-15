@@ -128,9 +128,7 @@ volumes:
   sonarr-config:
   jackett-config:
   jackett-blackhole:
-  prowlarr-config:
   jellyfin-config:
-  qbittorrent-config:
   jellyseerr-config:
   tx-config:
   tx-watch:
