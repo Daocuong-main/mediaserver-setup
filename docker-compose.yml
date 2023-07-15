@@ -11,8 +11,7 @@ services:
       - JELLYFIN_PublishedServerUrl=192.168.1.100 #optional
     volumes:
       - /home/cuong/Config/Jellyfin:/config
-      - /home/cuong/Data/Series:/tv
-      - /home/cuong/Data/Movies:/movies
+      - /home/cuong/Data/Torrents:/data
     ports:
       - 8096:8096
       - 8920:8920 #optional
@@ -105,8 +104,7 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Bazarr:/config
-      - /home/cuong/Data/Movies:/movies
-      - /home/cuong/Data/Series:/tv
+      - /home/cuong/Data/Torrents:/downloads
     ports:
       - 6767:6767
     restart: always
