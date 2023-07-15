@@ -29,7 +29,7 @@ services:
     ports:
       - 5055:5055
     volumes:
-      - /home/cuong/Config/Jellyseerr:/config
+      - /home/cuong/Config/Jellyseerr::/app/config
     restart: always
 
   transmission:
