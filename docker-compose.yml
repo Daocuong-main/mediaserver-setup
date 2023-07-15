@@ -9,9 +9,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - JELLYFIN_PublishedServerUrl=192.168.1.10 #optional
     volumes:
-      - /path/to/library:/config
-      - /path/to/tvseries:/data/tvshows
-      - /path/to/movies:/data/movies
+      - jellyfin-config:/config
+      - torrent-downloads:/data
     ports:
       - 8096:8096
       - 8920:8920 #optional
@@ -23,12 +22,12 @@ services:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
     environment:
-        - LOG_LEVEL=debug
-        - TZ=Asia/Ho_Chi_Minh
+      - LOG_LEVEL=debug
+      - TZ=Asia/Tashkent
     ports:
-        - 5055:5055
+      - 5055:5055
     volumes:
-        - /path/to/appdata/config:/app/config
+      - jellyseerr-config:/config
     restart: always
 
   transmission:
@@ -41,9 +40,9 @@ services:
       - USER=admin
       - PASS=12345
     volumes:
-      - /path/to/data:/config
-      - /path/to/downloads:/downloads
-      - /path/to/watch/folder:/watch
+      - tx-config:/config
+      - torrent-downloads:/downloads
+      - tx-watch:/watch
     ports:
       - 9091:9091
       - 51413:51413
@@ -59,8 +58,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - AUTO_UPDATE=true
     volumes:
-      - /path/to/data:/config
-      - /path/to/blackhole:/downloads
+      - jackett-config:/config
+      - jackett-blackhole:/downloads
     ports:
       - 9117:9117
     restart: always
@@ -73,9 +72,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /path/to/data:/config
-      - /path/to/movies:/movies #optional
-      - /path/to/downloadclient-downloads:/downloads #optional
+      - radarr-config:/config
+      - torrent-downloads:/downloads
     ports:
       - 7878:7878
     restart: always
@@ -88,9 +86,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /path/to/data:/config
-      - /path/to/tvseries:/tv #optional
-      - /path/to/downloadclient-downloads:/downloads #optional
+      - sonarr-config:/config
+      - torrent-downloads:/downloads
     ports:
       - 8989:8989
     restart: always
@@ -103,9 +100,20 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /path/to/bazarr/config:/config
-      - /path/to/movies:/movies #optional
-      - /path/to/tv:/tv #optional
+      - bazarr-config:/config
+      - torrent-downloads:/downloads
     ports:
       - 6767:6767
     restart: always
+    
+volumes:
+  torrent-downloads:
+  radarr-config:
+  sonarr-config:
+  jackett-config:
+  jackett-blackhole:
+  prowlarr-config:
+  jellyfin-config:
+  qbittorrent-config:
+  tx-config:
+  tx-watch:
