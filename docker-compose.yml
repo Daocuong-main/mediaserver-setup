@@ -108,6 +108,7 @@ services:
     
 volumes:
   torrent-downloads:
+  bazarr-config:
   radarr-config:
   sonarr-config:
   jackett-config:
