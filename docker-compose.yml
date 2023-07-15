@@ -38,8 +38,8 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
-      - USER= admin
-      - PASS= 12345
+      - USER=admin
+      - PASS=12345
     volumes:
       - /path/to/data:/config
       - /path/to/downloads:/downloads
