@@ -9,8 +9,9 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/user/cuong/config/jellyfin-config:/config
-      - /home/user/cuong/data/media:/data
+      - /home/user/cuong/library:/config
+      - /home/user/cuong/tvseries:/data/tvshows
+      - /home/user/cuong/movies:/data/movies
     ports:
       - 8096:8096
       - 8920:8920 #optional
@@ -27,7 +28,7 @@ services:
     ports:
       - 5055:5055
     volumes:
-      - /home/user/cuong/config/jellyseerr-config:/config
+      - /home/user/cuong/appdata/config:/app/config
     restart: always
 
   transmission:
@@ -40,9 +41,9 @@ services:
       - USER=admin
       - PASS=12345
     volumes:
-      - /home/user/cuong/config/tx-config:/config
-      - /home/user/cuong/config/torrent-downloads:/downloads
-      - /home/user/cuong/config/tx-watch:/watch
+      - /home/user/cuong/data:/config
+      - /home/user/cuong/downloads:/downloads
+      - /home/user/cuong/watch/folder:/watch
     ports:
       - 9091:9091
       - 51413:51413
@@ -58,8 +59,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - AUTO_UPDATE=true
     volumes:
-      - /home/user/cuong/config/jackett-config:/config
-      - /home/user/cuong/config/jackett-blackhole:/downloads
+      - /home/user/cuong/data:/config
+      - /home/user/cuong/blackhole:/downloads
     ports:
       - 9117:9117
     restart: always
@@ -72,8 +73,9 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/user/cuong/config/radarr-config:/config
-      - /home/user/cuong/config/torrent-downloads:/downloads
+      - /home/user/cuong/data:/config
+      - /home/user/cuong/movies:/data/movies
+      - /home/user/cuong/blackhole:/downloads #optional
     ports:
       - 7878:7878
     restart: always
@@ -86,8 +88,9 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/user/cuong/config/sonarr-config:/config
-      - /home/user/cuong/config/torrent-downloads:/downloads
+      - /home/user/cuong/data:/config
+      - /home/user/cuong/tvseries:/data/tvshows
+      - /home/user/cuong/blackhole:/downloads #optional
     ports:
       - 8989:8989
     restart: always
@@ -100,8 +103,9 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/user/cuong/config/bazarr-config:/config
-      - /home/user/cuong/config/torrent-downloads:/downloads
+      - /home/user/cuong/bazarr/config:/config
+      - /home/user/cuong/tvseries:/data/tvshows
+      - /home/user/cuong/movies:/data/movies
     ports:
       - 6767:6767
     restart: always
