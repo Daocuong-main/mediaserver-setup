@@ -9,8 +9,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - jellyfin-config:/config
-      - torrent-downloads:/data
+      - /home/user/cuong/config/jellyfin-config:/config
+      - /home/user/cuong/data/media:/data
     ports:
       - 8096:8096
       - 8920:8920 #optional
@@ -18,17 +18,17 @@ services:
       - 1900:1900/udp #optional
     restart: always
 
-    jellyseerr:
-      image: fallenbagel/jellyseerr:latest
-      container_name: jellyseerr
-      environment:
-        - LOG_LEVEL=debug
-        - TZ=Asia/Tashkent
-      ports:
-        - 5055:5055
-      volumes:
-        - jellyseerr-config:/config
-      restart: always
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Asia/Tashkent
+    ports:
+      - 5055:5055
+    volumes:
+      - /home/user/cuong/config/jellyseerr-config:/config
+    restart: always
 
   transmission:
     image: lscr.io/linuxserver/transmission:latest
@@ -40,9 +40,9 @@ services:
       - USER=admin
       - PASS=12345
     volumes:
-      - tx-config:/config
-      - torrent-downloads:/downloads
-      - tx-watch:/watch
+      - /home/user/cuong/config/tx-config:/config
+      - /home/user/cuong/config/torrent-downloads:/downloads
+      - /home/user/cuong/config/tx-watch:/watch
     ports:
       - 9091:9091
       - 51413:51413
@@ -58,8 +58,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - AUTO_UPDATE=true
     volumes:
-      - jackett-config:/config
-      - jackett-blackhole:/downloads
+      - /home/user/cuong/config/jackett-config:/config
+      - /home/user/cuong/config/jackett-blackhole:/downloads
     ports:
       - 9117:9117
     restart: always
@@ -72,8 +72,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - radarr-config:/config
-      - torrent-downloads:/downloads
+      - /home/user/cuong/config/radarr-config:/config
+      - /home/user/cuong/config/torrent-downloads:/downloads
     ports:
       - 7878:7878
     restart: always
@@ -86,8 +86,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - sonarr-config:/config
-      - torrent-downloads:/downloads
+      - /home/user/cuong/config/sonarr-config:/config
+      - /home/user/cuong/config/torrent-downloads:/downloads
     ports:
       - 8989:8989
     restart: always
@@ -100,20 +100,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - bazarr-config:/config
-      - torrent-downloads:/downloads
+      - /home/user/cuong/config/bazarr-config:/config
+      - /home/user/cuong/config/torrent-downloads:/downloads
     ports:
       - 6767:6767
     restart: always
-    
-volumes:
-  torrent-downloads:
-  bazarr-config:
-  radarr-config:
-  sonarr-config:
-  jackett-config:
-  jackett-blackhole:
-  jellyfin-config:
-  jellyseerr-config:
-  tx-config:
-  tx-watch:
