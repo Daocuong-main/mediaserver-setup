@@ -56,14 +56,14 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
-      - AUTO_UPDATE=true #optional
+      - TZ=Asia/Ho_Chi_Minh
+      - AUTO_UPDATE=true
     volumes:
-      - /path/to/data:/config
-      - /path/to/blackhole:/downloads
+      - /home/user/cuong/data:/config
+      - /home/user/cuong/blackhole:/downloads
     ports:
       - 9117:9117
-    restart: unless-stopped
+    restart: always
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
