@@ -11,8 +11,6 @@ services:
     volumes:
       - jellyfin-config:/config
       - torrent-downloads:/data
-    networks:
-      - mynetwork
     ports:
       - 8096:8096
       - 8920:8920 #optional
@@ -26,8 +24,6 @@ services:
     environment:
       - LOG_LEVEL=debug
       - TZ=Asia/Tashkent
-    networks:
-      - mynetwork
     ports:
       - 5055:5055
     volumes:
@@ -47,8 +43,6 @@ services:
       - tx-config:/config
       - torrent-downloads:/downloads
       - tx-watch:/watch
-    networks:
-      - mynetwork
     ports:
       - 9091:9091
       - 51413:51413
@@ -66,8 +60,6 @@ services:
     volumes:
       - jackett-config:/config
       - jackett-blackhole:/downloads
-    networks:
-      - mynetwork
     ports:
       - 9117:9117
     restart: always
@@ -82,8 +74,6 @@ services:
     volumes:
       - radarr-config:/config
       - torrent-downloads:/downloads
-    networks:
-      - mynetwork
     ports:
       - 7878:7878
     restart: always
@@ -98,8 +88,6 @@ services:
     volumes:
       - sonarr-config:/config
       - torrent-downloads:/downloads
-    networks:
-      - mynetwork
     ports:
       - 8989:8989
     restart: always
@@ -114,8 +102,6 @@ services:
     volumes:
       - bazarr-config:/config
       - torrent-downloads:/downloads
-    networks:
-      - mynetwork
     ports:
       - 6767:6767
     restart: always
@@ -131,7 +117,3 @@ volumes:
   jellyseerr-config:
   tx-config:
   tx-watch:
-
-networks:
-  mynetwork:
-    external: true
