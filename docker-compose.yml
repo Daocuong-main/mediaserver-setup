@@ -74,7 +74,6 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Radarr:/config
-      - /home/cuong/Data/Movies:/movies
       - /home/cuong/Data/Torrents:/downloads
     ports:
       - 7878:7878
@@ -89,7 +88,6 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Sonarr:/config
-      - /home/cuong/Data/Series:/tv
       - /home/cuong/Data/Torrents:/downloads
     ports:
       - 8989:8989
