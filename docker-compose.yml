@@ -116,5 +116,6 @@ volumes:
   prowlarr-config:
   jellyfin-config:
   qbittorrent-config:
+  jellyseerr-config:
   tx-config:
   tx-watch:
