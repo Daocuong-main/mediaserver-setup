@@ -19,17 +19,17 @@ services:
       - 1900:1900/udp #optional
     restart: always
 
-  jellyseerr:
-    image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr
-    environment:
-      - LOG_LEVEL=debug
-      - TZ=Asia/Tashkent
-    ports:
-      - 5055:5055
-    volumes:
-      - /home/cuong/Config/Jellyseerr:/app/config
-    restart: always
+  # jellyseerr:
+  #   image: fallenbagel/jellyseerr:latest
+  #   container_name: jellyseerr
+  #   environment:
+  #     - LOG_LEVEL=debug
+  #     - TZ=Asia/Tashkent
+  #   ports:
+  #     - 5055:5055
+  #   volumes:
+  #     - /home/cuong/Config/Jellyseerr:/app/config
+  #   restart: always
 
   transmission:
     image: lscr.io/linuxserver/transmission:latest
