@@ -4,7 +4,6 @@ services:
   jellyfin:
     image: lscr.io/linuxserver/jellyfin:latest
     container_name: jellyfin
-    mem_limit: 1g
     environment:
       - PUID=1000
       - PGID=1000
@@ -35,7 +34,6 @@ services:
   transmission:
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
-    mem_limit: 512m
     environment:
       - PUID=1000
       - PGID=1000
@@ -55,7 +53,6 @@ services:
   jackett:
     image: lscr.io/linuxserver/jackett:latest
     container_name: jackett
-    mem_limit: 512m
     environment:
       - PUID=1000
       - PGID=1000
@@ -71,7 +68,6 @@ services:
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
-    mem_limit: 512m
     environment:
       - PUID=1000
       - PGID=1000
@@ -86,7 +82,6 @@ services:
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
-    mem_limit: 512m
     environment:
       - PUID=1000
       - PGID=1000
@@ -101,7 +96,6 @@ services:
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
     container_name: bazarr
-    mem_limit: 128m
     environment:
       - PUID=1000
       - PGID=1000
