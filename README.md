@@ -1,4 +1,6 @@
 
+
+
 # mediaserver-setup
 My setup media server step to step
 
@@ -12,7 +14,7 @@ My setup media server step to step
 7. After the installation is complete, follow the commands below for the initial setup.
 8. Login command line as root user on Proxmox machine
 9. Keep the laptop always on when the screen is closed: \
-`nano /etc/systemd/logind.conf`\
+`sudo nano /etc/systemd/logind.conf`\
 modify the line\
 `#HandleLidSwitch=suspend`\
 to\
@@ -92,3 +94,18 @@ sudo ethtool -s eth0 speed 1000 duplex full
 sudo ethtool eth0
 ```
 eth0 is the ethernet interface of the current machine using `ip addr show` to know.
+## Zerotier setup
+1. Create an account, install everything according to the instructions [here](https://docs.zerotier.com/getting-started/getting-started).
+2. [Route between ZeroTier and Physical Networks](https://zerotier.atlassian.net/wiki/spaces/SD/pages/224395274/Route+between+ZeroTier+and+Physical+Networks)
+3. Change group to user on rules.v4 
+  ```
+  bash sudo chgrp "usergroup" /etc/iptables/rules.v*
+  ```
+Enable writting permission to group 
+  ```
+  bash sudo chmod 664 /etc/iptables/rules.v*
+  ```
+Try again 
+  ```
+  bash sudo iptables-save > /etc/iptables/rules.v4
+  ```
