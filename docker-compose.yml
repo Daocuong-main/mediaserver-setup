@@ -10,8 +10,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - JELLYFIN_PublishedServerUrl=192.168.1.100 #optional
     volumes:
-      - /home/cuong/Config/Jellyfin:/config
-      - /home/cuong/Data/Torrents:/data
+      - /home/mediaserver/Config/Jellyfin:/config
+      - /home/mediaserver/Data/Torrents:/data
     ports:
       - 8096:8096
       - 8920:8920 #optional
@@ -28,7 +28,7 @@ services:
   #   ports:
   #     - 5055:5055
   #   volumes:
-  #     - /home/cuong/Config/Jellyseerr:/app/config
+  #     - /home/mediaserver/Config/Jellyseerr:/app/config
   #   restart: always
 
   transmission:
@@ -41,9 +41,9 @@ services:
       - USER=admin
       - PASS=12345
     volumes:
-      - /home/cuong/Config/Transmission:/config
-      - /home/cuong/Data/Torrents:/downloads
-      - /home/cuong/Data/Torrents/Watch:/watch
+      - /home/mediaserver/Config/Transmission:/config
+      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/mediaserver/Data/Torrents/Watch:/watch
     ports:
       - 9091:9091
       - 51413:51413
@@ -59,8 +59,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - AUTO_UPDATE=true
     volumes:
-      - /home/cuong/Config/Jackett:/config
-      - /home/cuong/Data/Torrents:/downloads
+      - /home/mediaserver/Config/Jackett:/config
+      - /home/mediaserver/Data/Torrents:/downloads
     ports:
       - 9117:9117
     restart: always
@@ -73,8 +73,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/cuong/Config/Radarr:/config
-      - /home/cuong/Data/Torrents:/downloads
+      - /home/mediaserver/Config/Radarr:/config
+      - /home/mediaserver/Data/Torrents:/downloads
     ports:
       - 7878:7878
     restart: always
@@ -87,8 +87,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/cuong/Config/Sonarr:/config
-      - /home/cuong/Data/Torrents:/downloads
+      - /home/mediaserver/Config/Sonarr:/config
+      - /home/mediaserver/Data/Torrents:/downloads
     ports:
       - 8989:8989
     restart: always
@@ -101,8 +101,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/cuong/Config/Bazarr:/config
-      - /home/cuong/Data/Torrents:/downloads
+      - /home/mediaserver/Config/Bazarr:/config
+      - /home/mediaserver/Data/Torrents:/downloads
     ports:
       - 6767:6767
     restart: always
