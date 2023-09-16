@@ -98,14 +98,14 @@ eth0 is the ethernet interface of the current machine using `ip addr show` to kn
 1. Create an account, install everything according to the instructions [here](https://docs.zerotier.com/getting-started/getting-started).
 2. [Route between ZeroTier and Physical Networks](https://zerotier.atlassian.net/wiki/spaces/SD/pages/224395274/Route+between+ZeroTier+and+Physical+Networks)
 3. Change group to user on rules.v4 
-```
-bash sudo chgrp "usergroup" /etc/iptables/rules.v*
-```
+  ```
+  bash sudo chgrp "usergroup" /etc/iptables/rules.v*
+  ```
 Enable writting permission to group 
-```
-bash sudo chmod 664 /etc/iptables/rules.v*
-```
+  ```
+  bash sudo chmod 664 /etc/iptables/rules.v*
+  ```
 Try again 
-```
-bash sudo iptables-save > /etc/iptables/rules.v4
-```
+  ```
+  bash sudo iptables-save > /etc/iptables/rules.v4
+  ```
