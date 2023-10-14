@@ -19,23 +19,21 @@ services:
       - 1900:1900/udp #optional
     restart: always
 
-  transmission:
-    image: lscr.io/linuxserver/transmission:latest
-    container_name: transmission
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
-      - USER=admin
-      - PASS=12345
+      - WEBUI_PORT=8080
     volumes:
       - /home/mediaserver/Config/Transmission:/config
       - /home/mediaserver/Data/Torrents:/downloads
-      - /home/mediaserver/Data/Torrents/Watch:/watch
     ports:
-      - 9091:9091
-      - 51413:51413
-      - 51413:51413/udp
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
     restart: always
 
   jackett:
@@ -62,7 +60,7 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/mediaserver/Config/Radarr:/config
-      - /home/mediaserver/Data/Torrents/movies:/downloads
+      - /home/mediaserver/Data/Torrents:/downloads
     ports:
       - 7878:7878
     restart: always
@@ -76,7 +74,7 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/mediaserver/Config/Sonarr:/config
-      - /home/mediaserver/Data/Torrents/tv:/downloads
+      - /home/mediaserver/Data/Torrents:/downloads
     ports:
       - 8989:8989
     restart: always
