@@ -19,18 +19,6 @@ services:
       - 1900:1900/udp #optional
     restart: always
 
-  # jellyseerr:
-  #   image: fallenbagel/jellyseerr:latest
-  #   container_name: jellyseerr
-  #   environment:
-  #     - LOG_LEVEL=debug
-  #     - TZ=Asia/Tashkent
-  #   ports:
-  #     - 5055:5055
-  #   volumes:
-  #     - /home/mediaserver/Config/Jellyseerr:/app/config
-  #   restart: always
-
   transmission:
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
@@ -74,7 +62,7 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/mediaserver/Config/Radarr:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/mediaserver/Data/Torrents/movies:/downloads
     ports:
       - 7878:7878
     restart: always
@@ -88,7 +76,7 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/mediaserver/Config/Sonarr:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/mediaserver/Data/Torrents/tv:/downloads
     ports:
       - 8989:8989
     restart: always
