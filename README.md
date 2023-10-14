@@ -56,6 +56,20 @@ network:
 `sudo apt update` \
 `sudo apt install git`
 2. Insall [Docker engine](https://docs.docker.com/engine/install/ubuntu/)
+## Configure qBittorrent
+
+- Open qBitTorrent at http://localhost:8080. Default username:password is admin:adminadmin
+- Go to Tools --> Options --> WebUI --> Change password
+- Run below commands on the server
+
+```bash
+sudo docker exec -it qbittorrent bash # Get inside qBittorrent container
+
+# Above command will get you inside qBittorrent interactive terminal, Run below command in qbt terminal
+mkdir /downloads/movies /downloads/tvshows
+chown 1000:1000 /downloads/movies /downloads/tvshows
+```
+
 ### Make sure the device runs at maximum bandwidth
 To perform an iperf test between a Linux machine (client) and a Windows machine (server), you'll need to follow these steps:
 
