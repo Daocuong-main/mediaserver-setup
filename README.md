@@ -120,3 +120,4 @@ Try again
   ```
   bash sudo iptables-save > /etc/iptables/rules.v4
   ```
+speedtest: curl -Lso- vietpn.co | bash
