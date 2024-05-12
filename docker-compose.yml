@@ -1,4 +1,3 @@
-version: "3.9"
 name: mediaserver-setup
 services:
   jellyfin:
@@ -100,7 +99,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - LOG_HTML=${LOG_HTML:-false}
       - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
-      - TZ=sia/Ho_Chi_Minh
+      - TZ=Asia/Ho_Chi_Minh
     ports:
       - "${PORT:-8191}:8191"
     restart: always
