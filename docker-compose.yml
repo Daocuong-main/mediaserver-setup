@@ -11,6 +11,7 @@ services:
     volumes:
       - /home/mediaserver/Config/Jellyfin:/config
       - /home/mediaserver/Data/Torrents:/data
+      - /mnt/external:/external_data
     ports:
       - 8096:8096
       - 8920:8920 #optional
@@ -29,6 +30,7 @@ services:
     volumes:
       - /home/mediaserver/Config/Transmission:/config
       - /home/mediaserver/Data/Torrents:/downloads
+      - /mnt/external:/external_data
     ports:
       - 8080:8080
       - 6881:6881
@@ -46,6 +48,7 @@ services:
     volumes:
       - /home/mediaserver/Config/Jackett:/config
       - /home/mediaserver/Data/Torrents:/downloads
+      - /mnt/external:/external_data
     ports:
       - 9117:9117
     restart: always
@@ -60,6 +63,7 @@ services:
     volumes:
       - /home/mediaserver/Config/Radarr:/config
       - /home/mediaserver/Data/Torrents:/downloads
+      - /mnt/external:/external_data
     ports:
       - 7878:7878
     restart: always
@@ -74,6 +78,7 @@ services:
     volumes:
       - /home/mediaserver/Config/Sonarr:/config
       - /home/mediaserver/Data/Torrents:/downloads
+      - /mnt/external:/external_data
     ports:
       - 8989:8989
     restart: always
@@ -88,6 +93,7 @@ services:
     volumes:
       - /home/mediaserver/Config/Bazarr:/config
       - /home/mediaserver/Data/Torrents:/downloads
+      - /mnt/external:/external_data
     ports:
       - 6767:6767
     restart: always
