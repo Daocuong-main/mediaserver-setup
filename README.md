@@ -121,3 +121,29 @@ Try again
   bash sudo iptables-save > /etc/iptables/rules.v4
   ```
 speedtest: ```curl -Lso- vietpn.co | bash```
+
+### Unmount and clone disk
+Here are the steps to clone `sdb` to `sdc` and then eject `sdb`:
+
+1. **Unmount the drives** (if they are mounted):
+    ```bash
+    sudo umount /mnt/external
+    ```
+
+2. **Clone `sdb` to `sdc`** using `dd`:
+    ```bash
+    sudo dd if=/dev/sdb of=/dev/sdc bs=64K conv=noerror,sync status=progress
+    ```
+
+    - `if=/dev/sdb`: Input file (source drive)
+    - `of=/dev/sdc`: Output file (destination drive)
+    - `bs=64K`: Block size (you can adjust this if needed)
+    - `conv=noerror,sync`: Continue on read errors, pad blocks with zeros
+    - `status=progress`: Show progress during the operation
+
+3. **Eject `sdb`**:
+    ```bash
+    sudo eject /dev/sdb
+    ```
+
+Make sure to double-check the device names (`sdb` and `sdc`) before running these commands to avoid data loss. If you have any questions or need further assistance, feel free to ask!
