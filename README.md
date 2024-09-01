@@ -123,6 +123,10 @@ Try again
 speedtest: ```curl -Lso- vietpn.co | bash```
 
 ### Unmount and clone disk
+Before clone, turn off docker compose:
+
+```sudo docker compose down```
+
 Here are the steps to clone `sdb` to `sdc` and then eject `sdb`:
 
 1. **Unmount the drives** (if they are mounted):
