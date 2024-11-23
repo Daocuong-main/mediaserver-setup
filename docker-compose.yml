@@ -9,8 +9,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - JELLYFIN_PublishedServerUrl=192.168.1.100 #optional
     volumes:
-      - /home/mediaserver/Config/Jellyfin:/config
-      - /home/mediaserver/Data/Torrents:/data
+      - /home/cuong/Config/Jellyfin:/config
+      - /home/cuong/Data/Torrents:/data
       - /mnt/external:/external_data
     ports:
       - 8096:8096
@@ -30,8 +30,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - WEBUI_PORT=8080
     volumes:
-      - /home/mediaserver/Config/Transmission:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/cuong/Config/Transmission:/config
+      - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
     ports:
       - 8080:8080
@@ -51,8 +51,8 @@ services:
       - AUTO_UPDATE=true
       - NAME_SERVERS=1.1.1.1
     volumes:
-      - /home/mediaserver/Config/Jackett:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/cuong/Config/Jackett:/config
+      - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
     ports:
       - 9117:9117
@@ -66,8 +66,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/mediaserver/Config/Radarr:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/cuong/Config/Radarr:/config
+      - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
     ports:
       - 7878:7878
@@ -83,8 +83,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/mediaserver/Config/Sonarr:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/cuong/Config/Sonarr:/config
+      - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
     ports:
       - 8989:8989
@@ -100,8 +100,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/mediaserver/Config/Bazarr:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/cuong/Config/Bazarr:/config
+      - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
     ports:
       - 6767:6767
