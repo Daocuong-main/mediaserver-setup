@@ -27,17 +27,8 @@ Then restart the OS via:\
 2. Then create a virtual machine according to the instructions as shown in the [video](https://youtu.be/xBUnV2rQ7do)
 3. After booting into ubuntu server, run apt update: `sudo apt update && sudo apt dist-upgrade`
 4. Check current ip address: `ip addr show`
-5. Edit 00-installer-config.yaml `sudo nano /etc/netplan/00-installer-config.yaml`
+5. Edit `sudo nano /etc/netplan/50-cloud-init.yaml`
 6. Edit:
-```
-# This is the network config written by 'subiquity'
-network:
-  ethernets:
-    ens18:
-      dhcp4: true
-  version: 2                                                                                                      
-```
-to this:
 ```
 # This is the network config
 network:
