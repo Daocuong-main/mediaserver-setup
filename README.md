@@ -58,17 +58,46 @@ network:
 2. Insall [Docker engine](https://docs.docker.com/engine/install/ubuntu/)
 ## Configure qBittorrent
 
-- Open qBitTorrent at http://localhost:8080. Default username:password is admin:adminadmin
+- Open qBitTorrent at http://localhost:5080. Default username is `admin`. Temporary password can be collected from container log `docker logs qbittorrent`
 - Go to Tools --> Options --> WebUI --> Change password
 - Run below commands on the server
 
 ```bash
-sudo docker exec -it qbittorrent bash # Get inside qBittorrent container
+docker exec -it qbittorrent bash # Get inside qBittorrent container
 
 # Above command will get you inside qBittorrent interactive terminal, Run below command in qbt terminal
 mkdir /downloads/movies /downloads/tvshows
 chown 1000:1000 /downloads/movies /downloads/tvshows
 ```
+
+## Configure Radarr
+
+- Open Radarr at http://localhost:7878
+- Settings --> Media Management --> Check mark "Movies deleted from disk are automatically unmonitored in Radarr" under File management section --> Save
+- Settings --> Media Management --> Scroll to bottom --> Add Root Folder --> Browse to /downloads/movies --> OK
+- Settings --> Download clients --> qBittorrent --> Add Host (qbittorrent) and port (5080) --> Username and password --> Test --> Save **Note: If VPN is enabled, then qbittorrent is reachable on vpn's service name. In this case use `vpn` in Host field.**
+- Settings --> General --> Enable advance setting --> Select Authentication and add username and password
+- Indexer will get automatically added during configuration of Prowlarr. See 'Configure Prowlarr' section.
+
+Sonarr can also be configured in similar way.
+
+**Add a movie** (After Prowlarr is configured)
+
+- Movies --> Search for a movie --> Add Root folder (/downloads/movies) --> Quality profile --> Add movie
+- All queued movies download can be checked here, Activities --> Queue 
+- Go to qBittorrent (http://localhost:5080) and see if movie is getting downloaded (After movie is queued. This depends on availability of movie in indexers configured in Prowlarr.)
+
+## Configure Jellyfin
+
+- Open Jellyfin at http://localhost:8096
+- When you access the jellyfin for first time using browser, A guided configuration will guide you to configure jellyfin. Just follow the guide.
+- Add media library folder and choose /data/movies/
+
+## Configure Jellyseerr
+
+- Open Jellyfin at http://localhost:5055
+- When you access the jellyseerr for first time using browser, A guided configuration will guide you to configure jellyseerr. Just follow the guide and provide the required details about sonarr and Radarr.
+- Follow the Overseerr document (Jellyseerr is fork of overseerr) for detailed setup - https://docs.overseerr.dev/ 
 
 ### Make sure the device runs at maximum bandwidth
 To perform an iperf test between a Linux machine (client) and a Windows machine (server), you'll need to follow these steps:
