@@ -135,15 +135,15 @@ eth0 is the ethernet interface of the current machine using `ip addr show` to kn
 2. [Route between ZeroTier and Physical Networks](https://zerotier.atlassian.net/wiki/spaces/SD/pages/224395274/Route+between+ZeroTier+and+Physical+Networks)
 3. Change group to user on rules.v4 
   ```
-  bash sudo chgrp "usergroup" /etc/iptables/rules.v*
+  sudo chgrp "usergroup" /etc/iptables/rules.v*
   ```
 Enable writting permission to group 
   ```
-  bash sudo chmod 664 /etc/iptables/rules.v*
+  sudo chmod 664 /etc/iptables/rules.v*
   ```
 Try again 
   ```
-  bash sudo iptables-save > /etc/iptables/rules.v4
+  sudo iptables-save > /etc/iptables/rules.v4
   ```
 speedtest: ```curl -Lso- vietpn.co | bash```
 
