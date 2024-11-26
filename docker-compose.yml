@@ -9,8 +9,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - JELLYFIN_PublishedServerUrl=192.168.1.100 #optional
     volumes:
-      - /home/mediaserver/Config/Jellyfin:/config
-      - /home/mediaserver/Data/Torrents:/data
+      - /home/cuong/Config/Jellyfin:/config
+      - /home/cuong/Data/Torrents:/data
       - /mnt/external:/external_data
     ports:
       - 8096:8096
@@ -28,29 +28,13 @@ services:
       - TZ=Asia/Ho_Chi_Minh
       - WEBUI_PORT=8080
     volumes:
-      - /home/mediaserver/Config/Transmission:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/cuong/Config/qbittorrent:/config
+      - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
     ports:
       - 8080:8080
       - 6881:6881
       - 6881:6881/udp
-    restart: always
-
-  jackett:
-    image: lscr.io/linuxserver/jackett:latest
-    container_name: jackett
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Asia/Ho_Chi_Minh
-      - AUTO_UPDATE=true
-    volumes:
-      - /home/mediaserver/Config/Jackett:/config
-      - /home/mediaserver/Data/Torrents:/downloads
-      - /mnt/external:/external_data
-    ports:
-      - 9117:9117
     restart: always
 
   radarr:
@@ -61,8 +45,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/mediaserver/Config/Radarr:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/cuong/Config/Radarr:/config
+      - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
     ports:
       - 7878:7878
@@ -76,8 +60,8 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/mediaserver/Config/Sonarr:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/cuong/Config/Sonarr:/config
+      - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
     ports:
       - 8989:8989
@@ -91,22 +75,23 @@ services:
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
     volumes:
-      - /home/mediaserver/Config/Bazarr:/config
-      - /home/mediaserver/Data/Torrents:/downloads
+      - /home/cuong/Config/Bazarr:/config
+      - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
     ports:
       - 6767:6767
     restart: always
     
-  flaresolverr:
-    image: 21hsmw/flaresolverr:nodriver
-    restart: unless-stopped
-    container_name: flaresolverr
-    ports:
-      - 8191:8191
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
     environment:
-      - LOG_LEVEL=debug
+      - PUID=1000
+      - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
-      - NAME_SERVERS=1.1.1.1
-      - LANG=en-US 
+    volumes:
+      - /home/cuong/Config/prowlarr:/config
+    ports:
+      - 9696:9696
+    restart: always
       
