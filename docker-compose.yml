@@ -94,4 +94,15 @@ services:
     ports:
       - 9696:9696
     restart: always
-      
+
+  flaresolverr:
+    image: 21hsmw/flaresolverr:nodriver
+    restart: unless-stopped
+    container_name: flaresolverr
+    ports:
+      - 8191:8191
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Asia/Ho_Chi_Minh
+      - NAME_SERVERS=1.1.1.1
+      - LANG=en-US 
