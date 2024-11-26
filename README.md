@@ -21,34 +21,30 @@ Additionally, ensure that the file also has this line:\
 Then restart the OS via:\
 `sudo service systemd-logind restart`
 ## Ubuntu server setup
-### Create virtual machine
+### Create virtual machine (Optinal)
 1. Go to Datacenter -> pve01 -> local(pve01) -> ISO images -> Upload ISO to upload ubuntu server ISO
 ![image](https://github.com/Daocuong-main/mediaserver-setup/assets/47266136/fa2d6237-ebbd-464e-9a24-bd7cad28f764)
 2. Then create a virtual machine according to the instructions as shown in the [video](https://youtu.be/xBUnV2rQ7do)
 3. After booting into ubuntu server, run apt update: `sudo apt update && sudo apt dist-upgrade`
 4. Check current ip address: `ip addr show`
-5. Edit 00-installer-config.yaml `sudo nano /etc/netplan/00-installer-config.yaml`
+5. Edit `sudo nano /etc/netplan/50-cloud-init.yaml`
 6. Edit:
 ```
-# This is the network config written by 'subiquity'
+# This is the network config
 network:
-  ethernets:
-    ens18:
-      dhcp4: true
-  version: 2                                                                                                      
-```
-to this:
-```
-# This is the network config written by 'subiquity'
-network:
-  ethernets:
-    ens18:
-      dhcp4: no
-      addresses: [192.168.1.10/24]
-      gateway4: 192.168.1.1
-      nameservers:
-            addresses: [123.23.23.23,123.26.26.26]
-  version: 2
+    version: 2
+    ethernets:
+        enp0s25:
+            addresses:
+                - 192.168.1.100/24
+            routes:
+                - to: default
+                  via: 192.168.1.1
+            nameservers:
+                addresses:
+                    - 1.1.1.1
+                    - 1.0.0.1
+                search: []
 ```
 7. `sudo netplan apply`
 ### Install some stuff
@@ -58,17 +54,46 @@ network:
 2. Insall [Docker engine](https://docs.docker.com/engine/install/ubuntu/)
 ## Configure qBittorrent
 
-- Open qBitTorrent at http://localhost:8080. Default username:password is admin:adminadmin
+- Open qBitTorrent at http://localhost:5080. Default username is `admin`. Temporary password can be collected from container log `docker logs qbittorrent`
 - Go to Tools --> Options --> WebUI --> Change password
 - Run below commands on the server
 
 ```bash
-sudo docker exec -it qbittorrent bash # Get inside qBittorrent container
+docker exec -it qbittorrent bash # Get inside qBittorrent container
 
 # Above command will get you inside qBittorrent interactive terminal, Run below command in qbt terminal
 mkdir /downloads/movies /downloads/tvshows
 chown 1000:1000 /downloads/movies /downloads/tvshows
 ```
+
+## Configure Radarr
+
+- Open Radarr at http://localhost:7878
+- Settings --> Media Management --> Check mark "Movies deleted from disk are automatically unmonitored in Radarr" under File management section --> Save
+- Settings --> Media Management --> Scroll to bottom --> Add Root Folder --> Browse to /downloads/movies --> OK
+- Settings --> Download clients --> qBittorrent --> Add Host (qbittorrent) and port (5080) --> Username and password --> Test --> Save **Note: If VPN is enabled, then qbittorrent is reachable on vpn's service name. In this case use `vpn` in Host field.**
+- Settings --> General --> Enable advance setting --> Select Authentication and add username and password
+- Indexer will get automatically added during configuration of Prowlarr. See 'Configure Prowlarr' section.
+
+Sonarr can also be configured in similar way.
+
+**Add a movie** (After Prowlarr is configured)
+
+- Movies --> Search for a movie --> Add Root folder (/downloads/movies) --> Quality profile --> Add movie
+- All queued movies download can be checked here, Activities --> Queue 
+- Go to qBittorrent (http://localhost:5080) and see if movie is getting downloaded (After movie is queued. This depends on availability of movie in indexers configured in Prowlarr.)
+
+## Configure Jellyfin
+
+- Open Jellyfin at http://localhost:8096
+- When you access the jellyfin for first time using browser, A guided configuration will guide you to configure jellyfin. Just follow the guide.
+- Add media library folder and choose /data/movies/
+
+## Configure Jellyseerr
+
+- Open Jellyfin at http://localhost:5055
+- When you access the jellyseerr for first time using browser, A guided configuration will guide you to configure jellyseerr. Just follow the guide and provide the required details about sonarr and Radarr.
+- Follow the Overseerr document (Jellyseerr is fork of overseerr) for detailed setup - https://docs.overseerr.dev/ 
 
 ### Make sure the device runs at maximum bandwidth
 To perform an iperf test between a Linux machine (client) and a Windows machine (server), you'll need to follow these steps:
@@ -110,15 +135,15 @@ eth0 is the ethernet interface of the current machine using `ip addr show` to kn
 2. [Route between ZeroTier and Physical Networks](https://zerotier.atlassian.net/wiki/spaces/SD/pages/224395274/Route+between+ZeroTier+and+Physical+Networks)
 3. Change group to user on rules.v4 
   ```
-  bash sudo chgrp "usergroup" /etc/iptables/rules.v*
+  sudo chgrp "usergroup" /etc/iptables/rules.v*
   ```
 Enable writting permission to group 
   ```
-  bash sudo chmod 664 /etc/iptables/rules.v*
+  sudo chmod 664 /etc/iptables/rules.v*
   ```
 Try again 
   ```
-  bash sudo iptables-save > /etc/iptables/rules.v4
+  sudo iptables-save > /etc/iptables/rules.v4
   ```
 speedtest: ```curl -Lso- vietpn.co | bash```
 
