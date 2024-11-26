@@ -1,7 +1,8 @@
+
 # mediaserver-setup
 My setup media server step to step
 
-## Proxmox setup
+## Proxmox setup (Optinal)
 1. Download [Proxmox VE ISO](https://www.proxmox.com/en/downloads)
 2. Boot ISO to USB using [Rufus](https://rufus.ie/en/) 
 3. Plug USB to machine and turn on it.
@@ -47,23 +48,37 @@ network:
                 search: []
 ```
 7. `sudo netplan apply`
-### Install some stuff
+## Install some stuff
 1. Install Git
 `sudo apt update` \
 `sudo apt install git`
 2. Insall [Docker engine](https://docs.docker.com/engine/install/ubuntu/)
 ## Configure qBittorrent
 
-- Open qBitTorrent at http://localhost:5080. Default username is `admin`. Temporary password can be collected from container log `docker logs qbittorrent`
+- Open qBitTorrent at http://localhost:8080.
+- Default username is `admin`.
+- Temporary password can be collected from container log `docker logs qbittorrent`
+1. **Get the Container ID**:
+   ```bash
+   sudo docker ps
+   ```
+   Look for the `qbittorrent` container and note its Container ID.
+
+2. **Check the Logs**:
+   ```bash
+   sudo docker logs <container_id>
+   ```
+   Replace `<container_id>` with the actual Container ID of your `qbittorrent` container. Look for a line in the logs that mentions a temporary password.
 - Go to Tools --> Options --> WebUI --> Change password
 - Run below commands on the server
 
 ```bash
-docker exec -it qbittorrent bash # Get inside qBittorrent container
+sudo docker exec -it qbittorrent bash # Get inside qBittorrent container
 
 # Above command will get you inside qBittorrent interactive terminal, Run below command in qbt terminal
 mkdir /downloads/movies /downloads/tvshows
 chown 1000:1000 /downloads/movies /downloads/tvshows
+exit
 ```
 
 ## Configure Radarr
@@ -71,7 +86,7 @@ chown 1000:1000 /downloads/movies /downloads/tvshows
 - Open Radarr at http://localhost:7878
 - Settings --> Media Management --> Check mark "Movies deleted from disk are automatically unmonitored in Radarr" under File management section --> Save
 - Settings --> Media Management --> Scroll to bottom --> Add Root Folder --> Browse to /downloads/movies --> OK
-- Settings --> Download clients --> qBittorrent --> Add Host (qbittorrent) and port (5080) --> Username and password --> Test --> Save **Note: If VPN is enabled, then qbittorrent is reachable on vpn's service name. In this case use `vpn` in Host field.**
+- Settings --> Download clients --> qBittorrent --> Add Host (qbittorrent) and port (5080) --> Username and password --> Test --> Save
 - Settings --> General --> Enable advance setting --> Select Authentication and add username and password
 - Indexer will get automatically added during configuration of Prowlarr. See 'Configure Prowlarr' section.
 
@@ -81,7 +96,7 @@ Sonarr can also be configured in similar way.
 
 - Movies --> Search for a movie --> Add Root folder (/downloads/movies) --> Quality profile --> Add movie
 - All queued movies download can be checked here, Activities --> Queue 
-- Go to qBittorrent (http://localhost:5080) and see if movie is getting downloaded (After movie is queued. This depends on availability of movie in indexers configured in Prowlarr.)
+- Go to qBittorrent (http://localhost:8080) and see if movie is getting downloaded (After movie is queued. This depends on availability of movie in indexers configured in Prowlarr.)
 
 ## Configure Jellyfin
 
@@ -89,13 +104,7 @@ Sonarr can also be configured in similar way.
 - When you access the jellyfin for first time using browser, A guided configuration will guide you to configure jellyfin. Just follow the guide.
 - Add media library folder and choose /data/movies/
 
-## Configure Jellyseerr
-
-- Open Jellyfin at http://localhost:5055
-- When you access the jellyseerr for first time using browser, A guided configuration will guide you to configure jellyseerr. Just follow the guide and provide the required details about sonarr and Radarr.
-- Follow the Overseerr document (Jellyseerr is fork of overseerr) for detailed setup - https://docs.overseerr.dev/ 
-
-### Make sure the device runs at maximum bandwidth
+## Make sure the device runs at maximum bandwidth
 To perform an iperf test between a Linux machine (client) and a Windows machine (server), you'll need to follow these steps:
 
 1. Set up the server-side (Windows machine):
@@ -130,6 +139,7 @@ sudo ethtool -s eth0 speed 1000 duplex full
 sudo ethtool eth0
 ```
 eth0 is the ethernet interface of the current machine using `ip addr show` to know.
+
 ## Zerotier setup
 1. Create an account, install everything according to the instructions [here](https://docs.zerotier.com/getting-started/getting-started).
 2. [Route between ZeroTier and Physical Networks](https://zerotier.atlassian.net/wiki/spaces/SD/pages/224395274/Route+between+ZeroTier+and+Physical+Networks)
@@ -147,7 +157,7 @@ Try again
   ```
 speedtest: ```curl -Lso- vietpn.co | bash```
 
-### Unmount and clone disk
+## Unmount and clone disk
 Before clone, turn off docker compose:
 
 ```sudo docker compose down```
