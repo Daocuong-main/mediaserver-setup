@@ -21,7 +21,7 @@ Additionally, ensure that the file also has this line:\
 Then restart the OS via:\
 `sudo service systemd-logind restart`
 ## Ubuntu server setup
-### Create virtual machine
+### Create virtual machine (Optinal)
 1. Go to Datacenter -> pve01 -> local(pve01) -> ISO images -> Upload ISO to upload ubuntu server ISO
 ![image](https://github.com/Daocuong-main/mediaserver-setup/assets/47266136/fa2d6237-ebbd-464e-9a24-bd7cad28f764)
 2. Then create a virtual machine according to the instructions as shown in the [video](https://youtu.be/xBUnV2rQ7do)
@@ -39,16 +39,21 @@ network:
 ```
 to this:
 ```
-# This is the network config written by 'subiquity'
+# This is the network config
 network:
-  ethernets:
-    ens18:
-      dhcp4: no
-      addresses: [192.168.1.10/24]
-      gateway4: 192.168.1.1
-      nameservers:
-            addresses: [123.23.23.23,123.26.26.26]
-  version: 2
+    version: 2
+    ethernets:
+        enp0s25:
+            addresses:
+                - 192.168.1.100/24
+            routes:
+                - to: default
+                  via: 192.168.1.1
+            nameservers:
+                addresses:
+                    - 1.1.1.1
+                    - 1.0.0.1
+                search: []
 ```
 7. `sudo netplan apply`
 ### Install some stuff
