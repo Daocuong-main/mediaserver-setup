@@ -96,13 +96,13 @@ services:
     restart: always
 
   flaresolverr:
-    image: 21hsmw/flaresolverr:nodriver
-    restart: unless-stopped
-    container_name: flaresolverr
-    ports:
-      - 8191:8191
-    environment:
-      - LOG_LEVEL=debug
-      - TZ=Asia/Ho_Chi_Minh
-      - NAME_SERVERS=1.1.1.1
-      - LANG=en-US 
+      image: ghcr.io/flaresolverr/flaresolverr:latest
+      container_name: flaresolverr
+      environment:
+        - LOG_LEVEL=${LOG_LEVEL:-info}
+        - LOG_HTML=${LOG_HTML:-false}
+        - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+        - TZ=Asia/Ho_Chi_Minh
+      ports:
+        - "${PORT:-8191}:8191"
+      restart: always 
