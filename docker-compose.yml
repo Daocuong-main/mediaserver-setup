@@ -14,9 +14,6 @@ services:
       - /mnt/external:/external_data
     ports:
       - 8096:8096
-      - 8920:8920 #optional
-      - 7359:7359/udp #optional
-      - 1900:1900/udp #optional
     restart: always
 
   qbittorrent:
@@ -96,13 +93,13 @@ services:
     restart: always
 
   flaresolverr:
-      image: ghcr.io/flaresolverr/flaresolverr:latest
-      container_name: flaresolverr
-      environment:
-        - LOG_LEVEL=${LOG_LEVEL:-info}
-        - LOG_HTML=${LOG_HTML:-false}
-        - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
-        - TZ=Asia/Ho_Chi_Minh
-      ports:
-        - "${PORT:-8191}:8191"
-      restart: always 
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=Asia/Ho_Chi_Minh
+    ports:
+      - "8191:8191"  # Fixed port mapping
+    restart: unless-stopped  # Updated restart policy
