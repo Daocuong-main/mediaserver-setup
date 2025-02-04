@@ -80,6 +80,7 @@ mkdir /downloads/movies /downloads/tvshows
 chown 1000:1000 /downloads/movies /downloads/tvshows
 exit
 ```
+`sudo chown -R 1000:1000 /home/cuong/Data/Torrents /mnt/external`
 
 ## Configure Radarr
 
