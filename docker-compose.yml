@@ -7,7 +7,8 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Asia/Ho_Chi_Minh
-      - JELLYFIN_PublishedServerUrl=<SERVER_LAN_IP> #optional
+    devices:
+      - /dev/dri:/dev/dri
     volumes:
       - /home/cuong/Config/Jellyfin:/config
       - /home/cuong/Data/Torrents:/data
