@@ -13,6 +13,7 @@ services:
       - /home/cuong/Config/Jellyfin:/config
       - /home/cuong/Data/Torrents:/data
       - /mnt/external:/external_data
+      - /mnt/external2:/external_data2
     ports:
       - 8096:8096
     restart: always
@@ -29,6 +30,7 @@ services:
       - /home/cuong/Config/qbittorrent:/config
       - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
+      - /mnt/external2:/external_data2
     ports:
       - 8080:8080
       - 6881:6881
@@ -46,6 +48,7 @@ services:
       - /home/cuong/Config/Radarr:/config
       - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
+      - /mnt/external2:/external_data2
     ports:
       - 7878:7878
     restart: always
@@ -61,6 +64,7 @@ services:
       - /home/cuong/Config/Sonarr:/config
       - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
+      - /mnt/external2:/external_data2
     ports:
       - 8989:8989
     restart: always
@@ -76,6 +80,7 @@ services:
       - /home/cuong/Config/Bazarr:/config
       - /home/cuong/Data/Torrents:/downloads
       - /mnt/external:/external_data
+      - /mnt/external2:/external_data2
     ports:
       - 6767:6767
     restart: always
