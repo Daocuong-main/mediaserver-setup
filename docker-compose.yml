@@ -1,4 +1,3 @@
-name: mediaserver-setup
 services:
   jellyfin:
     image: lscr.io/linuxserver/jellyfin:latest
@@ -11,9 +10,10 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - /home/cuong/Config/Jellyfin:/config
-      - /home/cuong/Data/Torrents:/data
-      - /mnt/external:/external_data
-      - /mnt/external2:/external_data2
+      # MAP THỐNG NHẤT:
+      - /home/cuong/Data/Torrents:/data/torrents
+      - /mnt/external:/data/media_ext1
+      - /mnt/external2:/data/media_ext2
     ports:
       - 8096:8096
     restart: always
@@ -28,9 +28,8 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - /home/cuong/Config/qbittorrent:/config
-      - /home/cuong/Data/Torrents:/downloads
-      - /mnt/external:/external_data
-      - /mnt/external2:/external_data2
+      # CHỈ CẦN MAP THƯ MỤC DOWNLOAD:
+      - /home/cuong/Data/Torrents:/data/torrents
     ports:
       - 8080:8080
       - 6881:6881
@@ -46,9 +45,10 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Radarr:/config
-      - /home/cuong/Data/Torrents:/downloads
-      - /mnt/external:/external_data
-      - /mnt/external2:/external_data2
+      # MAP Y HỆT JELLYFIN ĐỂ RADARR NHÌN THẤY MỌI THỨ:
+      - /home/cuong/Data/Torrents:/data/torrents
+      - /mnt/external:/data/media_ext1
+      - /mnt/external2:/data/media_ext2
     ports:
       - 7878:7878
     restart: always
@@ -62,9 +62,10 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Sonarr:/config
-      - /home/cuong/Data/Torrents:/downloads
-      - /mnt/external:/external_data
-      - /mnt/external2:/external_data2
+      # MAP Y HỆT RADARR:
+      - /home/cuong/Data/Torrents:/data/torrents
+      - /mnt/external:/data/media_ext1
+      - /mnt/external2:/data/media_ext2
     ports:
       - 8989:8989
     restart: always
@@ -78,9 +79,10 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Bazarr:/config
-      - /home/cuong/Data/Torrents:/downloads
-      - /mnt/external:/external_data
-      - /mnt/external2:/external_data2
+      # MAP Y HỆT SONARR/RADARR ĐỂ TÌM THẤY PHIM MÀ TẢI SUB:
+      - /home/cuong/Data/Torrents:/data/torrents
+      - /mnt/external:/data/media_ext1
+      - /mnt/external2:/data/media_ext2
     ports:
       - 6767:6767
     restart: always
@@ -94,6 +96,7 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/prowlarr:/config
+      # Prowlarr KHÔNG CẦN map dữ liệu phim/ảnh
     ports:
       - 9696:9696
     restart: always
@@ -107,5 +110,5 @@ services:
       - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
       - TZ=Asia/Ho_Chi_Minh
     ports:
-      - "8191:8191"  # Fixed port mapping
-    restart: unless-stopped  # Updated restart policy
+      - "8191:8191"
+    restart: unless-stopped
