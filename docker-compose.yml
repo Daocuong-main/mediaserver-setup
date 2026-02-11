@@ -10,10 +10,10 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - /home/cuong/Config/Jellyfin:/config
-      # --- CẬP NHẬT MAPPING MỚI ---
-      - /home/cuong/Data/Torrents:/data/media_local  # Kho phim trên ổ cứng máy
-      - /mnt/external:/data/media_ext1               # Kho phim ổ rời 1
-      - /mnt/external2:/data/media_ext2              # Kho phim ổ rời 2
+      # --- CẤU HÌNH CHUẨN ---
+      - /home/cuong/Data/Torrents:/data/media_local
+      - /mnt/external:/data/media_ext1
+      - /mnt/external2:/data/media_ext2
     ports:
       - 8096:8096
     restart: always
@@ -28,8 +28,10 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - /home/cuong/Config/qbittorrent:/config
-      # Map đúng vào media_local để tải xong nằm luôn trong kho nội bộ
+      # Map full cả 3 ổ để tải đâu cũng được
       - /home/cuong/Data/Torrents:/data/media_local
+      - /mnt/external:/data/media_ext1
+      - /mnt/external2:/data/media_ext2
     ports:
       - 8080:8080
       - 6881:6881
@@ -45,7 +47,6 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Radarr:/config
-      # Radarr cần nhìn thấy cả 3 ổ
       - /home/cuong/Data/Torrents:/data/media_local
       - /mnt/external:/data/media_ext1
       - /mnt/external2:/data/media_ext2
@@ -62,7 +63,6 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Sonarr:/config
-      # Sonarr cần nhìn thấy cả 3 ổ
       - /home/cuong/Data/Torrents:/data/media_local
       - /mnt/external:/data/media_ext1
       - /mnt/external2:/data/media_ext2
@@ -79,8 +79,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Bazarr:/config
-      # MAP Y HỆT SONARR/RADARR ĐỂ TÌM THẤY PHIM MÀ TẢI SUB:
-      - /home/cuong/Data/Torrents:/data/torrents
+      # --- ĐÃ SỬA LẠI CHO ĐÚNG ---
+      - /home/cuong/Data/Torrents:/data/media_local
       - /mnt/external:/data/media_ext1
       - /mnt/external2:/data/media_ext2
     ports:
@@ -96,7 +96,6 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/prowlarr:/config
-      # Prowlarr KHÔNG CẦN map dữ liệu phim/ảnh
     ports:
       - 9696:9696
     restart: always
