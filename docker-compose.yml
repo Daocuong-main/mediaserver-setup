@@ -10,10 +10,10 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - /home/cuong/Config/Jellyfin:/config
-      # MAP THỐNG NHẤT:
-      - /home/cuong/Data/Torrents:/data/torrents
-      - /mnt/external:/data/media_ext1
-      - /mnt/external2:/data/media_ext2
+      # --- CẬP NHẬT MAPPING MỚI ---
+      - /home/cuong/Data/Torrents:/data/media_local  # Kho phim trên ổ cứng máy
+      - /mnt/external:/data/media_ext1               # Kho phim ổ rời 1
+      - /mnt/external2:/data/media_ext2              # Kho phim ổ rời 2
     ports:
       - 8096:8096
     restart: always
@@ -28,8 +28,8 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - /home/cuong/Config/qbittorrent:/config
-      # CHỈ CẦN MAP THƯ MỤC DOWNLOAD:
-      - /home/cuong/Data/Torrents:/data/torrents
+      # Map đúng vào media_local để tải xong nằm luôn trong kho nội bộ
+      - /home/cuong/Data/Torrents:/data/media_local
     ports:
       - 8080:8080
       - 6881:6881
@@ -45,8 +45,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Radarr:/config
-      # MAP Y HỆT JELLYFIN ĐỂ RADARR NHÌN THẤY MỌI THỨ:
-      - /home/cuong/Data/Torrents:/data/torrents
+      # Radarr cần nhìn thấy cả 3 ổ
+      - /home/cuong/Data/Torrents:/data/media_local
       - /mnt/external:/data/media_ext1
       - /mnt/external2:/data/media_ext2
     ports:
@@ -62,8 +62,8 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Sonarr:/config
-      # MAP Y HỆT RADARR:
-      - /home/cuong/Data/Torrents:/data/torrents
+      # Sonarr cần nhìn thấy cả 3 ổ
+      - /home/cuong/Data/Torrents:/data/media_local
       - /mnt/external:/data/media_ext1
       - /mnt/external2:/data/media_ext2
     ports:

@@ -1,41 +1,21 @@
+# Ultimate Media Server Setup Guide
 
-# mediaserver-setup
-My setup media server step to step
+This guide walks through setting up a media server (Jellyfin, *Arr stack, qBittorrent) on Ubuntu Server with Docker, focusing on correct permissions, unified path mapping, and network optimizations.
 
-## Proxmox setup (Optinal)
-1. Download [Proxmox VE ISO](https://www.proxmox.com/en/downloads)
-2. Boot ISO to USB using [Rufus](https://rufus.ie/en/) 
-3. Plug USB to machine and turn on it.
-4. While turning on go to BOOT menu
-5. Select boot from USB
-6. Install proxmox following the instructions on the screen if still don't know how to do it, follow the instructions of this [video](https://youtu.be/u8E3-Zy9NvI)
-7. After the installation is complete, follow the commands below for the initial setup.
-8. Login command line as root user on Proxmox machine
-9. Keep the laptop always on when the screen is closed: \
-`sudo nano /etc/systemd/logind.conf`\
-modify the line\
-`#HandleLidSwitch=suspend`\
-to\
-`HandleLidSwitch=ignore`\
-Additionally, ensure that the file also has this line:\
-`LidSwitchIgnoreInhibited=no`\
-Then restart the OS via:\
-`sudo service systemd-logind restart`
-## Ubuntu server setup
-### Create virtual machine (Optinal)
-1. Go to Datacenter -> pve01 -> local(pve01) -> ISO images -> Upload ISO to upload ubuntu server ISO
-![image](https://github.com/Daocuong-main/mediaserver-setup/assets/47266136/fa2d6237-ebbd-464e-9a24-bd7cad28f764)
-2. Then create a virtual machine according to the instructions as shown in the [video](https://youtu.be/xBUnV2rQ7do)
-3. After booting into ubuntu server, run apt update: `sudo apt update && sudo apt dist-upgrade`
-4. Check current ip address: `ip addr show`
-5. Edit `sudo nano /etc/netplan/50-cloud-init.yaml`
-6. Edit:
-```
-# This is the network config
+## 1. Initial Server Setup
+
+### Network Configuration (Static IP)
+
+1. Check current interface name: `ip addr show`
+2. Edit Netplan config: `sudo nano /etc/netplan/50-cloud-init.yaml` (Name might vary).
+3. Paste the following configuration (Ensure indentation is correct):
+
+```yaml
 network:
     version: 2
     ethernets:
-        enp0s25:
+        enp0s25:  # Replace with your interface name
+            dhcp4: no
             addresses:
                 - 192.168.1.100/24
             routes:
@@ -44,146 +24,166 @@ network:
             nameservers:
                 addresses:
                     - 1.1.1.1
-                    - 1.0.0.1
-                search: []
+                    - 8.8.8.8
+
 ```
-7. `sudo netplan apply`
-## Install some stuff
-1. Install Git
-`sudo apt update` \
-`sudo apt install git`
-2. Insall [Docker engine](https://docs.docker.com/engine/install/ubuntu/)
-## Configure qBittorrent
 
-- Open qBitTorrent at http://localhost:8080.
-- Default username is `admin`.
-- Temporary password can be collected from container log `docker logs qbittorrent`
-1. **Get the Container ID**:
-   ```bash
-   sudo docker ps
-   ```
-   Look for the `qbittorrent` container and note its Container ID.
-
-2. **Check the Logs**:
-   ```bash
-   sudo docker logs <container_id>
-   ```
-   Replace `<container_id>` with the actual Container ID of your `qbittorrent` container. Look for a line in the logs that mentions a temporary password.
-- Go to Tools --> Options --> WebUI --> Change password
-- Run below commands on the server
+4. Apply changes:
 
 ```bash
-sudo docker exec -it qbittorrent bash # Get inside qBittorrent container
+sudo netplan apply
 
-# Above command will get you inside qBittorrent interactive terminal, Run below command in qbt terminal
-mkdir /downloads/movies /downloads/tvshows
-chown 1000:1000 /downloads/movies /downloads/tvshows
-exit
 ```
-`sudo chown -R 1000:1000 /home/cuong/Data/Torrents /mnt/external`
 
-## Configure Radarr
+### Install Docker & Git
 
-- Open Radarr at http://localhost:7878
-- Settings --> Media Management --> Check mark "Movies deleted from disk are automatically unmonitored in Radarr" under File management section --> Save
-- Settings --> Media Management --> Scroll to bottom --> Add Root Folder --> Browse to /downloads/movies --> OK
-- Settings --> Download clients --> qBittorrent --> Add Host (qbittorrent) and port (5080) --> Username and password --> Test --> Save
-- Settings --> General --> Enable advance setting --> Select Authentication and add username and password
-- Indexer will get automatically added during configuration of Prowlarr. See 'Configure Prowlarr' section.
+```bash
+sudo apt update && sudo apt install git -y
+# Install Docker using the convenience script
+curl -fsSL [https://get.docker.com](https://get.docker.com) -o get-docker.sh
+sudo sh get-docker.sh
+# Add current user to docker group (Avoids using sudo for docker commands)
+sudo usermod -aG docker $USER
+newgrp docker
 
-Sonarr can also be configured in similar way.
-
-**Add a movie** (After Prowlarr is configured)
-
-- Movies --> Search for a movie --> Add Root folder (/downloads/movies) --> Quality profile --> Add movie
-- All queued movies download can be checked here, Activities --> Queue 
-- Go to qBittorrent (http://localhost:8080) and see if movie is getting downloaded (After movie is queued. This depends on availability of movie in indexers configured in Prowlarr.)
-
-## Configure Jellyfin
-
-- Open Jellyfin at http://localhost:8096
-- When you access the jellyfin for first time using browser, A guided configuration will guide you to configure jellyfin. Just follow the guide.
-- Add media library folder and choose /data/movies/
-
-## Make sure the device runs at maximum bandwidth
-To perform an iperf test between a Linux machine (client) and a Windows machine (server), you'll need to follow these steps:
-
-1. Set up the server-side (Windows machine):
-   - Download the iperf utility for Windows from the official website: https://iperf.fr/iperf-download.php#windows
-   - Extract the downloaded file to a directory on your Windows machine.
-   - Open a command prompt window with administrator privileges.
-   - Navigate to the directory where you extracted iperf.
-   - Run the following command to start iperf in server mode:
-     ```
-     iperf3.exe -s
-     ```
-
-2. Set up the client-side (Linux machine):
-   - Open a terminal on your Linux machine.
-   - Install iperf using the appropriate package manager for your Linux distribution. For example, on Debian or Ubuntu, you can use the following command:
-     ```
-     sudo apt-get install iperf3
-     ```
-   - Once installed, run the following command to test the network speed to the Windows server:
-     ```
-     iperf3 -c <server-ip>
-     ```
-     Replace `<server-ip>` with the IP address or hostname of your Windows machine.
-
-   - Wait for the test to complete. It will provide you with the network speed results.
-
-It's worth noting that Windows machines may have built-in firewall settings that could block iperf traffic. Therefore, ensure that the Windows firewall allows iperf traffic or temporarily disable the firewall during the test. Additionally, keep in mind that the network speed you measure with iperf may depend on various factors, including network congestion, hardware limitations, and other network traffic on your local network.
-### Otherwise run the following command
 ```
-sudo apt-get install ethtool
+
+---
+
+## 2. Storage & Permissions (CRITICAL STEP)
+
+### A. Mount External Drives (Permanent)
+
+**Important:** If using NTFS drives, you MUST mount them via `/etc/fstab` with specific UID/GID to allow Docker to write.
+
+1. Get UUID of drives: `ls -l /dev/disk/by-uuid/`
+2. Edit fstab: `sudo nano /etc/fstab`
+3. Add/Edit lines:
+
+```ini
+# Example for NTFS Drive (Windows formatted)
+UUID=XXXX-XXXX  /mnt/external   ntfs-3g   defaults,uid=1000,gid=1000,umask=002  0  0
+UUID=YYYY-YYYY  /mnt/external2  ntfs-3g   defaults,uid=1000,gid=1000,umask=002  0  0
+
+# Example for Ext4 Drive (Linux formatted)
+UUID=ZZZZ-ZZZZ  /mnt/data       ext4      defaults  0  0
+
+```
+
+4. Mount all: `sudo mount -a`
+
+### B. Fix Permissions (The "Golden" Script)
+
+Run this script to ensure your user (ID 1000) owns everything and future files inherit correct permissions across all storage locations (Local + External).
+
+```bash
+# 1. Ownership
+sudo chown -R 1000:1000 /home/$USER/Config
+sudo chown -R 1000:1000 /home/$USER/Data
+sudo chown -R 1000:1000 /mnt/external
+sudo chown -R 1000:1000 /mnt/external2
+
+# 2. Permissions (Read/Write for User & Group)
+sudo chmod -R 775 /home/$USER/Config
+sudo chmod -R 775 /home/$USER/Data
+sudo chmod -R 775 /mnt/external
+sudo chmod -R 775 /mnt/external2
+
+# 3. Sticky Bit (Ensures new files belong to group 1000)
+# Skip this step for NTFS drives
+sudo find /mnt/external -type d -exec chmod g+s {} +
+sudo find /mnt/external2 -type d -exec chmod g+s {} +
+
+```
+
+---
+
+## 3. Application Configuration
+
+### Configure qBittorrent (WebUI: `http://localhost:8080`)
+
+1. **Login:** Default `admin` / `adminadmin` (Check logs if random password generated: `docker logs qbittorrent`).
+2. **Download Path:**
+
+* Go to `Tools` -> `Options` -> `Downloads`.
+* Default Save Path: `/data/media_local` (This maps to your internal `Data/Torrents`).
+* **Note:** Do NOT use `/downloads`.
+
+### Configure Radarr / Sonarr (`:7878` / `:8989`)
+
+1. **Media Management:**
+
+* Enable "Show Advanced".
+* **Root Folders:** Add all 3 storage locations:
+* `/data/media_local` (Internal Storage)
+* `/data/media_ext1` (External Drive 1)
+* `/data/media_ext2` (External Drive 2)
+
+2. **Download Client:**
+
+* Client: qBittorrent
+* Host: `qbittorrent`
+* Port: `8080`
+* Test & Save.
+
+### Configure Jellyfin (`:8096`)
+
+1. **Add Library:**
+
+* Content type: Movies/Shows
+* Folders: Add the relevant folders from:
+* `/data/media_local`
+* `/data/media_ext1`
+* `/data/media_ext2`
+
+---
+
+## 4. Utilities & Maintenance
+
+### Bandwidth Test (iperf3)
+
+**Client (Linux):** `sudo apt install iperf3`
+**Server (Windows):** Download iperf3.exe
+
+1. **Windows (Server):** Run `iperf3.exe -s`
+2. **Linux (Client):** Run `iperf3 -c <WINDOWS_IP>`
+
+For Gigabit speed, ensure ethernet negotiation is correct:
+
+```bash
+sudo ethtool eth0 | grep Speed
+# If not 1000Mb/s, force it:
 sudo ethtool -s eth0 speed 1000 duplex full
-sudo ethtool eth0
+
 ```
-eth0 is the ethernet interface of the current machine using `ip addr show` to know.
 
-## Zerotier setup
-1. Create an account, install everything according to the instructions [here](https://docs.zerotier.com/getting-started/getting-started).
-2. [Route between ZeroTier and Physical Networks](https://zerotier.atlassian.net/wiki/spaces/SD/pages/224395274/Route+between+ZeroTier+and+Physical+Networks)
-3. Change group to user on rules.v4 
-  ```
-  sudo chgrp "usergroup" /etc/iptables/rules.v*
-  ```
-Enable writting permission to group 
-  ```
-  sudo chmod 664 /etc/iptables/rules.v*
-  ```
-Try again 
-  ```
-  sudo iptables-save > /etc/iptables/rules.v4
-  ```
-speedtest: ```curl -Lso- vietpn.co | bash```
+### ZeroTier Setup
 
-## Unmount and clone disk
-Before clone, turn off docker compose:
+1. Install: `curl -s https://install.zerotier.com | sudo bash`
+2. Join network: `sudo zerotier-cli join <NETWORK_ID>`
+3. **Routing (Linux as Router):**
 
-```sudo docker compose down```
+* Enable IP Forwarding in `/etc/sysctl.conf`: `net.ipv4.ip_forward=1` -> `sudo sysctl -p`
+* iptables rules:
 
-Here are the steps to clone `sdb` to `sdc` and then eject `sdb`:
+```bash
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i zt+ -o eth0 -j ACCEPT
 
-1. **Unmount the drives** (if they are mounted):
-    ```bash
-    sudo umount /mnt/external
-    ```
+```
 
-2. **Clone `sdb` to `sdc`** using `dd`:
-    ```bash
-    sudo dd if=/dev/sdb of=/dev/sdc bs=64K conv=noerror,sync status=progress
-    ```
+* Persist rules: `sudo apt install iptables-persistent`
 
-    - `if=/dev/sdb`: Input file (source drive)
-    - `of=/dev/sdc`: Output file (destination drive)
-    - `bs=64K`: Block size (you can adjust this if needed)
-    - `conv=noerror,sync`: Continue on read errors, pad blocks with zeros
-    - `status=progress`: Show progress during the operation
+### Cloning Disk (dd)
 
-3. **Eject `sdb`**:
-    ```bash
-    sudo eject /dev/sdb
-    ```
+**WARNING:** Use with caution. Verify drive letters (`lsblk`) before running.
 
-Make sure to double-check the device names (`sdb` and `sdc`) before running these commands to avoid data loss. If you have any questions or need further assistance, feel free to ask!
+1. Stop containers: `sudo docker compose down`
+2. Unmount: `sudo umount /mnt/external`
+3. Clone sdb to sdc:
+
+```bash
+sudo dd if=/dev/sdb of=/dev/sdc bs=64K conv=noerror,sync status=progress
+
+```
