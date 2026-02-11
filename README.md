@@ -41,7 +41,7 @@ sudo netplan apply
 ```bash
 sudo apt update && sudo apt install git -y
 # Install Docker using the convenience script
-curl -fsSL [https://get.docker.com](https://get.docker.com) -o get-docker.sh
+curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 # Add current user to docker group (Avoids using sudo for docker commands)
 sudo usermod -aG docker $USER
@@ -75,7 +75,7 @@ UUID=ZZZZ-ZZZZ  /mnt/data       ext4      defaults  0  0
 
 ### B. Fix Permissions (The "Golden" Script)
 
-Run this script to ensure your user (ID 1000) owns everything and future files inherit correct permissions across all storage locations (Local + External).
+Run this script to ensure your user (ID 1000) owns everything and future files inherit correct permissions across all storage locations.
 
 ```bash
 # 1. Ownership
@@ -99,55 +99,60 @@ sudo find /mnt/external2 -type d -exec chmod g+s {} +
 
 ---
 
-## 4. Application Configuration
+## 3. Essential App Configuration & Optimization
 
-### Configure qBittorrent (WebUI: `http://localhost:8080`)
+### A. Path Mapping (Crucial)
 
-1. **Login:** Default `admin` / `adminadmin` (Check logs if random password generated: `docker logs qbittorrent`).
-2. **Download Path:**
-* Go to `Tools` -> `Options` -> `Downloads`.
-* Default Save Path: `/data/media_local` (This maps to your internal `Data/Torrents`).
-* You can also save to `/data/media_ext1` or `/data/media_ext2` if needed.
-* **Note:** Do NOT use `/downloads`.
+Since we used Unified Path Mapping, configure apps as follows:
 
-
-
-### Configure Radarr / Sonarr (`:7878` / `:8989`)
-
-1. **Media Management:**
-* Enable "Show Advanced".
-* **Root Folders:** Add all 3 storage locations:
-* `/data/media_local` (Internal Storage)
-* `/data/media_ext1` (External Drive 1)
-* `/data/media_ext2` (External Drive 2)
+1. **qBittorrent** (`:8080`):
+* **Tools > Options > Downloads**:
+* Default Save Path: `/data/media_local` (Internal SSD).
+* *Note*: You can manually change specific torrents to `/data/media_ext1` or `/data/media_ext2`.
 
 
+2. **Radarr / Sonarr** (`:7878` / `:8989`):
+* **Settings > Media Management > Root Folders**:
+* Add: `/data/media_local` (Internal).
+* Add: `/data/media_ext1` (External 1).
+* Add: `/data/media_ext2` (External 2).
 
 
-2. **Download Client:**
-* Client: qBittorrent
-* Host: `qbittorrent`
-* Port: `8080`
-* Test & Save.
+3. **Jellyfin** (`:8096`):
+* **Libraries**: Point to `/data/media_local`, `/data/media_ext1`, etc.
 
 
 
-### Configure Jellyfin (`:8096`)
+### B. Enable Hardware Transcoding (Intel QuickSync)
 
-1. **Add Library:**
-* Content type: Movies/Shows
-* Folders: Add the relevant folders from:
-* `/data/media_local`
-* `/data/media_ext1`
-* `/data/media_ext2`
+Offload video processing to the GPU to save CPU usage.
+
+1. Open **Jellyfin** > **Dashboard** > **Playback**.
+2. **Hardware Acceleration**: Select `Intel QuickSync` (QSV) or `VAAPI`.
+3. **Enable Hardware Encoding**: Check all boxes (H264, HEVC, VC1, etc.).
+4. Save and restart Jellyfin container.
+
+### C. Bypass Cloudflare (Prowlarr + Flaresolverr)
+
+Fixes indexer errors for sites like 1337x.
+
+1. Open **Prowlarr** > **Settings** > **Indexers**.
+2. Add **FlareSolverr**.
+* **Name:** FlareSolverr
+* **Tags:** `flaresolverr`
+* **Host:** `http://flaresolverr:8191`
 
 
+3. When adding a new Indexer, add the tag `flaresolverr` to it.
 
+### D. Optimize Subtitles (Bazarr)
 
+1. **Providers:** Register accounts on https://www.google.com/search?q=OpenSubtitles.com and add credentials in Bazarr > Settings > Providers.
+2. **Path Mapping:** Ensure Bazarr paths match Sonarr/Radarr exactly (Fixed in Docker Compose).
 
 ---
 
-## 5. Utilities & Maintenance
+## 4. Utilities & Maintenance
 
 ### Bandwidth Test (iperf3)
 
