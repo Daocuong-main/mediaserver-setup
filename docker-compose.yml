@@ -112,15 +112,19 @@ services:
       - "8191:8191"
     restart: unless-stopped
 
-  homepage:
-    image: ghcr.io/gethomepage/homepage:latest
-    container_name: homepage
-    user: root  # THÊM DÒNG NÀY để có quyền đọc docker.sock
-    ports:
-      - 3000:3000
-    volumes:
-      - /home/cuong/Config/homepage:/app/config
-      - /var/run/docker.sock:/var/run/docker.sock # Bỏ ':ro' nếu cần, nhưng thường 'ro' vẫn chạy được nếu là root
-    environment:
-      - HOMEPAGE_ALLOWED_HOSTS=<SERVER_ZEROTIER_IP>
-    restart: unless-stopped
+  #---------------------------------------------------------------------#
+  #     Homarr - A simple, yet powerful dashboard for your server.      #
+  #---------------------------------------------------------------------#
+  services:
+    homarr:
+      container_name: homarr
+      image: ghcr.io/homarr-labs/homarr:latest
+      restart: unless-stopped
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
+        - ./homarr/appdata:/appdata
+      environment:
+        - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_KEY}
+      ports:
+        - '7575:7575'
+        
