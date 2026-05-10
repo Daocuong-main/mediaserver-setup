@@ -115,11 +115,12 @@ services:
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
+    user: root  # THÊM DÒNG NÀY để có quyền đọc docker.sock
     ports:
       - 3000:3000
     volumes:
-      - /home/cuong/Config/homepage:/app/config # Make sure your local config directory exists
-      - /var/run/docker.sock:/var/run/docker.sock:ro # Quyền đọc thông số Docker
+      - /home/cuong/Config/homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock # Bỏ ':ro' nếu cần, nhưng thường 'ro' vẫn chạy được nếu là root
     environment:
-      - HOMEPAGE_ALLOWED_HOSTS=<SERVER_ZEROTIER_IP>,localhost,127.0.0.1
+      - HOMEPAGE_ALLOWED_HOSTS=<SERVER_ZEROTIER_IP>
     restart: unless-stopped
