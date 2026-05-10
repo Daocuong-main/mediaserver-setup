@@ -111,3 +111,13 @@ services:
     ports:
       - "8191:8191"
     restart: unless-stopped
+
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    ports:
+      - 3000:3000
+    volumes:
+      - /home/cuong/Config/homepage:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Quyền đọc thông số Docker
+    restart: unless-stopped
