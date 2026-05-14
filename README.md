@@ -201,3 +201,109 @@ sudo iptables -A FORWARD -i zt+ -o eth0 -j ACCEPT
 sudo dd if=/dev/sdb of=/dev/sdc bs=64K conv=noerror,sync status=progress
 
 ```
+
+Chúc mừng bạn! Việc sử dụng `modprobe.d` là cách can thiệp trực tiếp vào module của nhân Linux, thường có hiệu quả cao hơn và ổn định hơn so với việc sửa Grub.
+
+Dưới đây là bản Document (Cheat Sheet) tóm tắt lại toàn bộ quá trình xử lý để bạn lưu trữ.
+
+---
+
+# DOCUMENT: XỬ LÝ LỖI VĂNG Ổ CỨNG RỜI (USB DISCONNECT) TRÊN LINUX
+
+## 1. Triệu chứng & Nguyên nhân
+
+* **Triệu chứng:** Ổ cứng ngoài (thường là các Box Orico, Seagate, chip JMicron) đang hoạt động bình thường thì bị mất kết nối (unmount). Kiểm tra `df -h` không thấy ổ, `dmesg` báo lỗi `I/O error` hoặc `USB disconnect`.
+* **Nguyên nhân:** Xung đột giữa giao thức **UAS (USB Attached SCSI)** hiện đại và Chip điều khiển (Controller) của Box HDD giá rẻ. Chip không xử lý kịp hàng đợi lệnh dẫn đến treo và reset kết nối.
+
+## 2. Giải pháp: Disable UAS (Force USB-Storage)
+
+Ép hệ thống sử dụng driver `usb-storage` truyền thống (BOT) để đảm bảo sự ổn định tuyệt đối cho Media Server 24/7.
+
+### Bước 1: Xác định mã định danh thiết bị (Hardware ID)
+
+Chạy lệnh:
+
+```bash
+lsusb
+
+```
+
+Tìm dòng chứa ổ cứng lỗi. Ví dụ:
+`Bus 003 Device 002: ID 152d:0578 JMicron Technology Corp. JMS578 SATA 6Gb/s`
+
+* **Vendor ID:** `152d`
+* **Product ID:** `0578`
+
+### Bước 2: Cấu hình chặn UAS qua Modprobe
+
+Tạo file cấu hình để ép module `usb-storage` nhận diện thiết bị này dưới dạng "quirks" (đặc biệt):
+
+```bash
+echo "options usb-storage quirks=152d:0578:u" | sudo tee /etc/modprobe.d/disable_uas.conf
+
+```
+
+*(Lưu ý: Thay `152d:0578` bằng ID thực tế của bạn).*
+
+### Bước 3: Cập nhật hệ thống khởi động
+
+Để cấu hình có tác dụng ngay từ lúc máy vừa bật (khi nạp Kernel), cần cập nhật lại `initramfs`:
+
+```bash
+sudo update-initramfs -u
+sudo reboot
+
+```
+
+### Bước 4: Kiểm tra kết quả
+
+Sau khi reboot, kiểm tra xem Driver nào đang điều khiển thiết bị:
+
+```bash
+lsusb -t
+
+```
+
+**Kết quả chuẩn:** Dòng thiết bị phải hiện `Driver=usb-storage` (Thay vì `Driver=uas`).
+
+---
+
+## 3. Cấu hình Mount cố định (fstab)
+
+Để tránh việc ổ cứng thay đổi tên (lúc `sdb`, lúc `sdc`) làm hỏng đường dẫn Docker, luôn sử dụng **UUID**.
+
+**File:** `/etc/fstab`
+**Cấu hình khuyến nghị:**
+
+```text
+UUID=efcf16bd-c481-4bed-8675-492145522416  /mnt/external2  ext4  defaults,nofail  0  2
+
+```
+
+* `nofail`: Giúp server vẫn khởi động được nếu chẳng may ổ cứng bị rút ra.
+* Không nên dùng `x-systemd.automount` nếu ổ cứng không ổn định.
+
+---
+
+## 4. Các lệnh cứu hộ nhanh (Cheat Sheet)
+
+| Lệnh | Tác dụng |
+| --- | --- |
+| `lsblk` | Xem danh sách ổ cứng và điểm mount |
+| `df -h` | Kiểm tra dung lượng và trạng thái mount |
+| `sudo mount -a` | Ép hệ thống mount lại toàn bộ theo file fstab |
+| `sudo umount -l /mnt/folder` | Gỡ mount cưỡng bách (khi bị treo "target is busy") |
+| `sudo dmesg -T | tail -n 50` | Xem log hệ thống thời gian thực (đã convert sang giờ người đọc) |
+| `sudo fsck -y /dev/sdX1` | Sửa lỗi định dạng file system (chỉ chạy khi đã unmount ổ) |
+
+---
+
+## 5. Lưu ý về phần cứng (Hardware Tips)
+
+1. **Cổng USB:** Ưu tiên cắm cổng USB 3.0 (màu xanh) trực tiếp trên Mainboard (phía sau case), tránh cắm qua Hub hoặc cổng mặt trước.
+2. **Cáp tín hiệu:** Cáp đi kèm Box Orico thường chất lượng trung bình. Nếu vẫn bị văng, hãy thay cáp USB 3.0 loại tốt.
+3. **Nguồn điện:** Nếu dùng ổ 3.5 inch, hãy đảm bảo cục nguồn của Box HDD đủ công suất (thường là 12V-2A).
+
+---
+
+*Tài liệu này giúp hệ thống Media Server (Jellyfin, qBittorrent, *Arr) của bạn hoạt động bền bỉ, tránh tình trạng mất dữ liệu giữa chừng.*
