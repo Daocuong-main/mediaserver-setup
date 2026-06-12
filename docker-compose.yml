@@ -112,18 +112,6 @@ services:
       - "8191:8191"
     restart: unless-stopped
 
-  homarr:
-    container_name: homarr
-    image: ghcr.io/homarr-labs/homarr:latest
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
-      - ./homarr/appdata:/appdata
-    environment:
-      - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_KEY}
-    ports:
-      - '7575:7575'
-
   speedtest-tracker:
     image: lscr.io/linuxserver/speedtest-tracker:latest
     container_name: speedtest-tracker
@@ -155,3 +143,20 @@ services:
       - /:/mnt/host:ro
     environment:
       DASHDOT_ENABLE_CPU_TEMPS: 'true'
+
+  homarr:
+    image: ghcr.io/homarr-labs/homarr:latest
+    container_name: homarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Ho_Chi_Minh
+      - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_KEY}
+    group_add:
+      - "${DOCKER_GID}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/cuong/Config/Homarr:/appdata
+    ports:
+      - 7575:7575
