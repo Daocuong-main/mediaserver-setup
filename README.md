@@ -1,382 +1,1392 @@
-# Ultimate Media Server Setup Guide
+# Media Server Setup Guide
 
-This guide walks through setting up a media server (Jellyfin, *Arr stack, qBittorrent) on Ubuntu Server with Docker, focusing on correct permissions, unified path mapping, and network optimizations.
+Ubuntu Server media stack using Docker Compose.
 
-## 1. Initial Server Setup
+This setup includes:
 
-### Network Configuration (Static IP)
+| Service           | Purpose                        | Port           |
+| ----------------- | ------------------------------ | -------------- |
+| Jellyfin          | Media streaming server         | `8096`         |
+| qBittorrent       | Torrent client                 | `8080`, `6881` |
+| Radarr            | Movie automation               | `7878`         |
+| Sonarr            | TV automation                  | `8989`         |
+| Bazarr            | Subtitle automation            | `6767`         |
+| Prowlarr          | Indexer manager                | `9696`         |
+| FlareSolverr      | Cloudflare bypass helper       | `8191`         |
+| Homarr            | Server dashboard               | `7575`         |
+| Speedtest Tracker | Scheduled internet speed tests | `6875`         |
+| DashDot           | Server monitoring dashboard    | `3001`         |
 
-1. Check current interface name: `ip addr show`
-2. Edit Netplan config: `sudo nano /etc/netplan/50-cloud-init.yaml` (Name might vary).
-3. Paste the following configuration (Ensure indentation is correct):
+Current server addresses:
 
-```yaml
-network:
-    version: 2
-    ethernets:
-        enp0s25:  # Replace with your interface name
-            dhcp4: no
-            addresses:
-                - <SERVER_LAN_IP>/24
-            routes:
-                - to: default
-                  via: 192.168.1.1
-            nameservers:
-                addresses:
-                    - 1.1.1.1
-                    - 8.8.8.8
-
+```text
+LAN IP:       <SERVER_LAN_IP>
+ZeroTier IP: <SERVER_ZEROTIER_IP>
 ```
 
-4. Apply changes:
-```bash
-sudo netplan apply
+Use the LAN IP when you are on the same local network. Use the ZeroTier IP when accessing the server remotely through ZeroTier.
 
+---
+
+## 1. Repository Layout
+
+Recommended project location:
+
+```bash
+/home/cuong/mediaserver-setup
 ```
 
+Expected files:
 
+```text
+mediaserver-setup/
+├── docker-compose.yml
+├── .env
+├── README.md
+└── setup_media_dirs.sh
+```
 
-### Install Docker & Git
+Main persistent config path:
+
+```text
+/home/cuong/Config
+```
+
+Main media/data paths:
+
+```text
+/home/cuong/Data/Torrents
+/mnt/external
+/mnt/external2
+```
+
+Inside Docker containers, these paths are mapped consistently:
+
+```text
+/data/media_local  -> /home/cuong/Data/Torrents
+/data/media_ext1   -> /mnt/external
+/data/media_ext2   -> /mnt/external2
+```
+
+This unified path mapping is important. Jellyfin, qBittorrent, Radarr, Sonarr, and Bazarr should all see the same media paths inside their containers.
+
+---
+
+## 2. Install Base Packages
+
+Update Ubuntu and install Git:
 
 ```bash
-sudo apt update && sudo apt install git -y
-# Install Docker using the convenience script
+sudo apt update
+sudo apt install -y git curl nano htop ca-certificates
+```
+
+Install Docker:
+
+```bash
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
-# Add current user to docker group (Avoids using sudo for docker commands)
+```
+
+Add your user to the Docker group:
+
+```bash
 sudo usermod -aG docker $USER
 newgrp docker
+```
 
+Check Docker:
+
+```bash
+docker --version
+docker compose version
 ```
 
 ---
 
-## 2. Storage & Permissions (CRITICAL STEP)
+## 3. Clone or Update the Repo
 
-### A. Mount External Drives (Permanent)
-
-**Important:** If using NTFS drives, you MUST mount them via `/etc/fstab` with specific UID/GID to allow Docker to write.
-
-1. Get UUID of drives: `ls -l /dev/disk/by-uuid/`
-2. Edit fstab: `sudo nano /etc/fstab`
-3. Add/Edit lines:
-
-```ini
-# Example for NTFS Drive (Windows formatted)
-UUID=XXXX-XXXX  /mnt/external   ntfs-3g   defaults,uid=1000,gid=1000,umask=002  0  0
-UUID=YYYY-YYYY  /mnt/external2  ntfs-3g   defaults,uid=1000,gid=1000,umask=002  0  0
-
-# Example for Ext4 Drive (Linux formatted)
-UUID=ZZZZ-ZZZZ  /mnt/data       ext4      defaults  0  0
-
-```
-
-4. Mount all: `sudo mount -a`
-
-### B. Fix Permissions (The "Golden" Script)
-
-Run this script to ensure your user (ID 1000) owns everything and future files inherit correct permissions across all storage locations.
+Clone the repo:
 
 ```bash
-# 1. Ownership
-sudo chown -R 1000:1000 /home/$USER/Config
-sudo chown -R 1000:1000 /home/$USER/Data
-sudo chown -R 1000:1000 /mnt/external
-sudo chown -R 1000:1000 /mnt/external2
+git clone https://github.com/Daocuong-main/mediaserver-setup.git
+cd mediaserver-setup
+```
 
-# 2. Permissions (Read/Write for User & Group)
-sudo chmod -R 775 /home/$USER/Config
-sudo chmod -R 775 /home/$USER/Data
-sudo chmod -R 775 /mnt/external
-sudo chmod -R 775 /mnt/external2
+Update the repo later:
 
-# 3. Sticky Bit (Ensures new files belong to group 1000)
-# Skip this step for NTFS drives
-sudo find /mnt/external -type d -exec chmod g+s {} +
-sudo find /mnt/external2 -type d -exec chmod g+s {} +
-
+```bash
+cd ~/mediaserver-setup
+git pull
 ```
 
 ---
 
-## 3. Essential App Configuration & Optimization
+## 4. Environment File
 
-### A. Path Mapping (Crucial)
-
-Since we used Unified Path Mapping, configure apps as follows:
-
-1. **qBittorrent** (`:8080`):
-* **Tools > Options > Downloads**:
-* Default Save Path: `/data/media_local` (Internal SSD).
-* *Note*: You can manually change specific torrents to `/data/media_ext1` or `/data/media_ext2`.
-
-
-2. **Radarr / Sonarr** (`:7878` / `:8989`):
-* **Settings > Media Management > Root Folders**:
-* Add: `/data/media_local` (Internal).
-* Add: `/data/media_ext1` (External 1).
-* Add: `/data/media_ext2` (External 2).
-
-
-3. **Jellyfin** (`:8096`):
-* **Libraries**: Point to `/data/media_local`, `/data/media_ext1`, etc.
-
-
-
-### B. Enable Hardware Transcoding (Intel QuickSync)
-
-Offload video processing to the GPU to save CPU usage.
-
-1. Open **Jellyfin** > **Dashboard** > **Playback**.
-2. **Hardware Acceleration**: Select `Intel QuickSync` (QSV) or `VAAPI`.
-3. **Enable Hardware Encoding**: Check all boxes (H264, HEVC, VC1, etc.).
-4. Save and restart Jellyfin container.
-
-### C. Bypass Cloudflare (Prowlarr + Flaresolverr)
-
-Fixes indexer errors for sites like 1337x.
-
-1. Open **Prowlarr** > **Settings** > **Indexers**.
-2. Add **FlareSolverr**.
-* **Name:** FlareSolverr
-* **Tags:** `flaresolverr`
-* **Host:** `http://flaresolverr:8191`
-
-
-3. When adding a new Indexer, add the tag `flaresolverr` to it.
-
-### D. Optimize Subtitles (Bazarr)
-
-1. **Providers:** Register accounts on https://www.google.com/search?q=OpenSubtitles.com and add credentials in Bazarr > Settings > Providers.
-2. **Path Mapping:** Ensure Bazarr paths match Sonarr/Radarr exactly (Fixed in Docker Compose).
-
----
-
-## 4. Utilities & Maintenance
-
-### Bandwidth Test (iperf3)
-
-**Client (Linux):** `sudo apt install iperf3`
-**Server (Windows):** Download iperf3.exe
-
-1. **Windows (Server):** Run `iperf3.exe -s`
-2. **Linux (Client):** Run `iperf3 -c <WINDOWS_IP>`
-
-For Gigabit speed, ensure ethernet negotiation is correct:
+Create the `.env` file in the same folder as `docker-compose.yml`:
 
 ```bash
-sudo ethtool eth0 | grep Speed
-# If not 1000Mb/s, force it:
-sudo ethtool -s eth0 speed 1000 duplex full
-
+cd ~/mediaserver-setup
+nano .env
 ```
 
-### ZeroTier Setup
-
-1. Install: `curl -s https://install.zerotier.com | sudo bash`
-2. Join network: `sudo zerotier-cli join <NETWORK_ID>`
-3. **Routing (Linux as Router):**
-* Enable IP Forwarding in `/etc/sysctl.conf`: `net.ipv4.ip_forward=1` -> `sudo sysctl -p`
-* iptables rules:
-```bash
-sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-sudo iptables -A FORWARD -i zt+ -o eth0 -j ACCEPT
-
-```
-
-
-* Persist rules: `sudo apt install iptables-persistent`
-
-
-
-### Cloning Disk (dd)
-
-**WARNING:** Use with caution. Verify drive letters (`lsblk`) before running.
-
-1. Stop containers: `sudo docker compose down`
-2. Unmount: `sudo umount /mnt/external`
-3. Clone sdb to sdc:
-```bash
-sudo dd if=/dev/sdb of=/dev/sdc bs=64K conv=noerror,sync status=progress
-
-```
-
-Chúc mừng bạn! Việc sử dụng `modprobe.d` là cách can thiệp trực tiếp vào module của nhân Linux, thường có hiệu quả cao hơn và ổn định hơn so với việc sửa Grub.
-
-Dưới đây là bản Document (Cheat Sheet) tóm tắt lại toàn bộ quá trình xử lý để bạn lưu trữ.
-
----
-
-# DOCUMENT: XỬ LÝ LỖI VĂNG Ổ CỨNG RỜI (USB DISCONNECT) TRÊN LINUX
-
-## 1. Triệu chứng & Nguyên nhân
-
-* **Triệu chứng:** Ổ cứng ngoài (thường là các Box Orico, Seagate, chip JMicron) đang hoạt động bình thường thì bị mất kết nối (unmount). Kiểm tra `df -h` không thấy ổ, `dmesg` báo lỗi `I/O error` hoặc `USB disconnect`.
-* **Nguyên nhân:** Xung đột giữa giao thức **UAS (USB Attached SCSI)** hiện đại và Chip điều khiển (Controller) của Box HDD giá rẻ. Chip không xử lý kịp hàng đợi lệnh dẫn đến treo và reset kết nối.
-
-## 2. Giải pháp: Disable UAS (Force USB-Storage)
-
-Ép hệ thống sử dụng driver `usb-storage` truyền thống (BOT) để đảm bảo sự ổn định tuyệt đối cho Media Server 24/7.
-
-### Bước 1: Xác định mã định danh thiết bị (Hardware ID)
-
-Chạy lệnh:
-
-```bash
-lsusb
-
-```
-
-Tìm dòng chứa ổ cứng lỗi. Ví dụ:
-`Bus 003 Device 002: ID 152d:0578 JMicron Technology Corp. JMS578 SATA 6Gb/s`
-
-* **Vendor ID:** `152d`
-* **Product ID:** `0578`
-
-### Bước 2: Cấu hình chặn UAS qua Modprobe
-
-Tạo file cấu hình để ép module `usb-storage` nhận diện thiết bị này dưới dạng "quirks" (đặc biệt):
-
-```bash
-echo "options usb-storage quirks=152d:0578:u" | sudo tee /etc/modprobe.d/disable_uas.conf
-
-```
-
-*(Lưu ý: Thay `152d:0578` bằng ID thực tế của bạn).*
-
-### Bước 3: Cập nhật hệ thống khởi động
-
-Để cấu hình có tác dụng ngay từ lúc máy vừa bật (khi nạp Kernel), cần cập nhật lại `initramfs`:
-
-```bash
-sudo update-initramfs -u
-sudo reboot
-
-```
-
-### Bước 4: Kiểm tra kết quả
-
-Sau khi reboot, kiểm tra xem Driver nào đang điều khiển thiết bị:
-
-```bash
-lsusb -t
-
-```
-
-**Kết quả chuẩn:** Dòng thiết bị phải hiện `Driver=usb-storage` (Thay vì `Driver=uas`).
-
----
-
-## 3. Cấu hình Mount cố định (fstab)
-
-Để tránh việc ổ cứng thay đổi tên (lúc `sdb`, lúc `sdc`) làm hỏng đường dẫn Docker, luôn sử dụng **UUID**.
-
-**File:** `/etc/fstab`
-**Cấu hình khuyến nghị:**
-
-```text
-UUID=efcf16bd-c481-4bed-8675-492145522416  /mnt/external2  ext4  defaults,nofail  0  2
-
-```
-
-* `nofail`: Giúp server vẫn khởi động được nếu chẳng may ổ cứng bị rút ra.
-* Không nên dùng `x-systemd.automount` nếu ổ cứng không ổn định.
-
----
-
-## 4. Các lệnh cứu hộ nhanh (Cheat Sheet)
-
-| Lệnh | Tác dụng |
-| --- | --- |
-| `lsblk` | Xem danh sách ổ cứng và điểm mount |
-| `df -h` | Kiểm tra dung lượng và trạng thái mount |
-| `sudo mount -a` | Ép hệ thống mount lại toàn bộ theo file fstab |
-| `sudo umount -l /mnt/folder` | Gỡ mount cưỡng bách (khi bị treo "target is busy") |
-| `sudo dmesg -T | tail -n 50` | Xem log hệ thống thời gian thực (đã convert sang giờ người đọc) |
-| `sudo fsck -y /dev/sdX1` | Sửa lỗi định dạng file system (chỉ chạy khi đã unmount ổ) |
-
----
-
-## 5. Lưu ý về phần cứng (Hardware Tips)
-
-1. **Cổng USB:** Ưu tiên cắm cổng USB 3.0 (màu xanh) trực tiếp trên Mainboard (phía sau case), tránh cắm qua Hub hoặc cổng mặt trước.
-2. **Cáp tín hiệu:** Cáp đi kèm Box Orico thường chất lượng trung bình. Nếu vẫn bị văng, hãy thay cáp USB 3.0 loại tốt.
-3. **Nguồn điện:** Nếu dùng ổ 3.5 inch, hãy đảm bảo cục nguồn của Box HDD đủ công suất (thường là 12V-2A).
-
----
-
-*Tài liệu này giúp hệ thống Media Server (Jellyfin, qBittorrent, *Arr) của bạn hoạt động bền bỉ, tránh tình trạng mất dữ liệu giữa chừng.*
-
-
-# Dashdot and speedtest tracker
-Yes, but only a few checks.
-
-Your `dashdot` service is basically ready after:
-
-```bash
-docker compose up -d
-```
-
-It maps DashDot to:
-
-```text
-http://SERVER-IP:3001
-```
-
-Your config matches the official DashDot Docker Compose pattern: `privileged: true`, host root mounted read-only at `/mnt/host`, and port `3001:3001`. CPU temps are also enabled with `DASHDOT_ENABLE_CPU_TEMPS: 'true'`.  DashDot’s own Compose docs show the same core requirements: privileged mode, `/:/mnt/host:ro`, and optional environment config such as CPU temperatures. ([getdashdot.com][1])
-
-For `speedtest-tracker`, you do need to make sure the `.env` variables exist before relying on it:
+Example:
 
 ```env
-SPEEDTEST_APP_KEY=base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-SPEEDTEST_APP_URL=http://SERVER-IP:6875
+TZ=Asia/Ho_Chi_Minh
+
+# Homarr
+HOMARR_SECRET_KEY=replace_with_64_character_hex_key
+DOCKER_GID=987
+
+# Speedtest Tracker
+SPEEDTEST_APP_KEY=base64:replace_with_generated_base64_key
+SPEEDTEST_APP_URL=http://<SERVER_LAN_IP>:6875
+
+# FlareSolverr
+LOG_LEVEL=info
+LOG_HTML=false
+CAPTCHA_SOLVER=none
 ```
 
-Generate the key with:
+Generate the Homarr secret key:
+
+```bash
+openssl rand -hex 32
+```
+
+Generate the Speedtest Tracker app key:
 
 ```bash
 echo -n 'base64:'; openssl rand -base64 32
 ```
 
-The Speedtest Tracker docs say `APP_KEY` is required for encryption and `APP_URL` is required; your compose references them as `${SPEEDTEST_APP_KEY}` and `${SPEEDTEST_APP_URL}`.  ([docs.speedtest-tracker.dev][2])
-
-After it starts, open:
-
-```text
-http://SERVER-IP:6875
-```
-
-Default login is:
-
-```text
-admin@example.com
-password
-```
-
-Change that immediately after first login. LinuxServer’s docs list those default credentials and confirm that `/config` stores the app config and SQLite database. ([docs.linuxserver.io][3])
-
-Also check permissions for the Speedtest Tracker config directory:
+Check Docker group ID:
 
 ```bash
-sudo mkdir -p /home/cuong/Config/speedtest-tracker
-sudo chown -R 1000:1000 /home/cuong/Config/speedtest-tracker
+getent group docker
 ```
 
-Your schedule is already set to run every 6 hours:
+Current expected result on this server:
+
+```text
+docker:x:987:cuong
+```
+
+So:
+
+```env
+DOCKER_GID=987
+```
+
+Do not change `HOMARR_SECRET_KEY` after Homarr has already been configured. Homarr uses it to encrypt stored secrets. Changing it later can break saved integrations.
+
+---
+
+## 5. Static IP Configuration
+
+Check network interface name:
+
+```bash
+ip addr show
+```
+
+Edit Netplan config:
+
+```bash
+sudo nano /etc/netplan/50-cloud-init.yaml
+```
+
+Example static LAN IP config:
 
 ```yaml
-SPEEDTEST_SCHEDULE=0 */6 * * *
+network:
+  version: 2
+  ethernets:
+    enp0s25:
+      dhcp4: no
+      addresses:
+        - <SERVER_LAN_IP>/24
+      routes:
+        - to: default
+          via: 192.168.1.1
+      nameservers:
+        addresses:
+          - 1.1.1.1
+          - 8.8.8.8
 ```
 
-That is fine. Leaving `SPEEDTEST_SERVERS=` empty is also acceptable unless you want to force a specific Ookla server. The LinuxServer docs say server IDs can be listed with:
+Apply:
+
+```bash
+sudo netplan apply
+```
+
+Verify:
+
+```bash
+ip addr show
+ip route
+```
+
+---
+
+## 6. Storage and Mounts
+
+Create mount points:
+
+```bash
+sudo mkdir -p /mnt/external
+sudo mkdir -p /mnt/external2
+```
+
+Check drives:
+
+```bash
+lsblk -f
+ls -l /dev/disk/by-uuid/
+```
+
+Edit fstab:
+
+```bash
+sudo nano /etc/fstab
+```
+
+Example for ext4 drives:
+
+```text
+UUID=YOUR-UUID-1  /mnt/external   ext4  defaults,nofail  0  2
+UUID=YOUR-UUID-2  /mnt/external2  ext4  defaults,nofail  0  2
+```
+
+Example for NTFS drives:
+
+```text
+UUID=YOUR-UUID-1  /mnt/external   ntfs-3g  defaults,nofail,uid=1000,gid=1000,umask=002  0  0
+UUID=YOUR-UUID-2  /mnt/external2  ntfs-3g  defaults,nofail,uid=1000,gid=1000,umask=002  0  0
+```
+
+Mount:
+
+```bash
+sudo mount -a
+```
+
+Check:
+
+```bash
+df -h
+lsblk
+```
+
+For a Linux media server, ext4 is preferred for long-term stability. NTFS works, but ext4 usually gives better Linux permissions behavior.
+
+---
+
+## 7. Folder Structure
+
+Create config folders:
+
+```bash
+sudo mkdir -p /home/cuong/Config/Jellyfin
+sudo mkdir -p /home/cuong/Config/qbittorrent
+sudo mkdir -p /home/cuong/Config/Radarr
+sudo mkdir -p /home/cuong/Config/Sonarr
+sudo mkdir -p /home/cuong/Config/Bazarr
+sudo mkdir -p /home/cuong/Config/prowlarr
+sudo mkdir -p /home/cuong/Config/speedtest-tracker
+sudo mkdir -p /home/cuong/Config/Homarr
+```
+
+Create media folders:
+
+```bash
+sudo mkdir -p /home/cuong/Data/Torrents
+sudo mkdir -p /mnt/external
+sudo mkdir -p /mnt/external2
+```
+
+Optional recommended subfolders:
+
+```bash
+sudo mkdir -p /home/cuong/Data/Torrents/downloads
+sudo mkdir -p /home/cuong/Data/Torrents/movies
+sudo mkdir -p /home/cuong/Data/Torrents/tv
+
+sudo mkdir -p /mnt/external/movies
+sudo mkdir -p /mnt/external/tv
+
+sudo mkdir -p /mnt/external2/movies
+sudo mkdir -p /mnt/external2/tv
+```
+
+---
+
+## 8. Permissions
+
+Most services run as:
+
+```text
+PUID=1000
+PGID=1000
+```
+
+Homarr uses Docker integration, so it also needs access to the Docker socket group. On this server, the Docker group ID is:
+
+```text
+987
+```
+
+Fix normal app permissions:
+
+```bash
+sudo chown -R 1000:1000 \
+  /home/cuong/Config/Jellyfin \
+  /home/cuong/Config/qbittorrent \
+  /home/cuong/Config/Radarr \
+  /home/cuong/Config/Sonarr \
+  /home/cuong/Config/Bazarr \
+  /home/cuong/Config/prowlarr \
+  /home/cuong/Config/speedtest-tracker \
+  /home/cuong/Data/Torrents \
+  /mnt/external \
+  /mnt/external2
+```
+
+Fix Homarr permissions:
+
+```bash
+sudo chown -R 1000:987 /home/cuong/Config/Homarr
+```
+
+Set directory and file permissions:
+
+```bash
+sudo find /home/cuong/Config -type d -exec chmod 775 {} \;
+sudo find /home/cuong/Config -type f -exec chmod 664 {} \;
+
+sudo find /home/cuong/Data -type d -exec chmod 775 {} \;
+sudo find /home/cuong/Data -type f -exec chmod 664 {} \;
+
+sudo find /mnt/external -type d -exec chmod 2775 {} \;
+sudo find /mnt/external -type f -exec chmod 664 {} \;
+
+sudo find /mnt/external2 -type d -exec chmod 2775 {} \;
+sudo find /mnt/external2 -type f -exec chmod 664 {} \;
+```
+
+Important:
+
+```bash
+sudo chown -R 775 /some/path
+```
+
+is wrong. That changes ownership to UID `775`.
+
+Use this for permissions:
+
+```bash
+sudo chmod -R 775 /some/path
+```
+
+Check permissions:
+
+```bash
+sudo stat -c '%n -> owner=%U:%G uid:gid=%u:%g perms=%A %a' \
+/home/cuong/Config/Jellyfin \
+/home/cuong/Config/qbittorrent \
+/home/cuong/Config/Radarr \
+/home/cuong/Config/Sonarr \
+/home/cuong/Config/Bazarr \
+/home/cuong/Config/prowlarr \
+/home/cuong/Config/speedtest-tracker \
+/home/cuong/Config/Homarr \
+/home/cuong/Data/Torrents \
+/mnt/external \
+/mnt/external2
+```
+
+Expected:
+
+```text
+Most config folders: 1000:1000
+Homarr config:       1000:987
+Media folders:       1000:1000
+```
+
+Check write access:
+
+```bash
+touch /home/cuong/Data/Torrents/test-permission && rm /home/cuong/Data/Torrents/test-permission
+touch /mnt/external/test-permission && rm /mnt/external/test-permission
+touch /mnt/external2/test-permission && rm /mnt/external2/test-permission
+```
+
+---
+
+## 9. Docker Compose: Homarr Docker Integration
+
+Homarr can run as a normal dashboard without Docker access. This setup uses Docker integration, so Homarr mounts the Docker socket:
+
+```yaml
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock
+```
+
+This lets Homarr detect containers and show Docker status.
+
+Check Docker socket permissions:
+
+```bash
+sudo stat -c '%n -> owner=%U:%G uid:gid=%u:%g perms=%A %a' /var/run/docker.sock
+```
+
+Expected:
+
+```text
+/var/run/docker.sock -> owner=root:docker uid:gid=0:987 perms=srw-rw---- 660
+```
+
+Homarr should use the Docker group ID:
+
+```env
+DOCKER_GID=987
+```
+
+Security note: Docker socket access is powerful. Keep Homarr private. Do not expose it directly to the public internet.
+
+---
+
+## 10. Start the Stack
+
+From the project folder:
+
+```bash
+cd ~/mediaserver-setup
+docker compose pull
+docker compose up -d
+```
+
+Check status:
+
+```bash
+docker compose ps
+```
+
+Check all logs for permission or startup problems:
+
+```bash
+docker compose logs --tail=300 | grep -Ei "permission|denied|not writable|read-only|readonly|database is locked|sqlite|error|fatal"
+```
+
+Check one service:
+
+```bash
+docker compose logs --tail=100 homarr
+docker compose logs --tail=100 jellyfin
+docker compose logs --tail=100 qbittorrent
+```
+
+Do not use this for normal updates unless you intentionally want to remove Docker-managed volumes:
+
+```bash
+docker compose down -v
+```
+
+For normal restart:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+---
+
+## 11. Service URLs
+
+LAN access:
+
+```text
+Homarr:            http://<SERVER_LAN_IP>:7575
+Jellyfin:          http://<SERVER_LAN_IP>:8096
+qBittorrent:       http://<SERVER_LAN_IP>:8080
+Radarr:            http://<SERVER_LAN_IP>:7878
+Sonarr:            http://<SERVER_LAN_IP>:8989
+Bazarr:            http://<SERVER_LAN_IP>:6767
+Prowlarr:          http://<SERVER_LAN_IP>:9696
+FlareSolverr:      http://<SERVER_LAN_IP>:8191
+Speedtest Tracker: http://<SERVER_LAN_IP>:6875
+DashDot:           http://<SERVER_LAN_IP>:3001
+```
+
+ZeroTier access:
+
+```text
+Homarr:            http://<SERVER_ZEROTIER_IP>:7575
+Jellyfin:          http://<SERVER_ZEROTIER_IP>:8096
+qBittorrent:       http://<SERVER_ZEROTIER_IP>:8080
+Radarr:            http://<SERVER_ZEROTIER_IP>:7878
+Sonarr:            http://<SERVER_ZEROTIER_IP>:8989
+Bazarr:            http://<SERVER_ZEROTIER_IP>:6767
+Prowlarr:          http://<SERVER_ZEROTIER_IP>:9696
+Speedtest Tracker: http://<SERVER_ZEROTIER_IP>:6875
+DashDot:           http://<SERVER_ZEROTIER_IP>:3001
+```
+
+For communication between containers, prefer Docker service names instead of IP addresses:
+
+```text
+http://jellyfin:8096
+http://qbittorrent:8080
+http://radarr:7878
+http://sonarr:8989
+http://bazarr:6767
+http://prowlarr:9696
+http://flaresolverr:8191
+```
+
+Use IP addresses for browser access. Use service names for app-to-app communication inside Docker.
+
+---
+
+## 12. First-Time App Setup
+
+### qBittorrent
+
+Open:
+
+```text
+http://<SERVER_LAN_IP>:8080
+```
+
+Set download paths under:
+
+```text
+Tools -> Options -> Downloads
+```
+
+Recommended save paths:
+
+```text
+/data/media_local/downloads
+/data/media_ext1/downloads
+/data/media_ext2/downloads
+```
+
+Use categories to separate downloads:
+
+```text
+movies
+tv
+music
+anime
+```
+
+qBittorrent must use the same container paths that Radarr, Sonarr, Bazarr, and Jellyfin can see.
+
+---
+
+### Prowlarr
+
+Open:
+
+```text
+http://<SERVER_LAN_IP>:9696
+```
+
+Add indexers under:
+
+```text
+Indexers -> Add Indexer
+```
+
+Add Radarr and Sonarr under:
+
+```text
+Settings -> Apps
+```
+
+Use Docker service names:
+
+```text
+Radarr URL:  http://radarr:7878
+Sonarr URL:  http://sonarr:8989
+```
+
+For the Prowlarr server URL, use:
+
+```text
+http://prowlarr:9696
+```
+
+Use API keys from Radarr and Sonarr:
+
+```text
+Radarr -> Settings -> General -> Security -> API Key
+Sonarr -> Settings -> General -> Security -> API Key
+```
+
+---
+
+### FlareSolverr
+
+FlareSolverr is used when an indexer requires Cloudflare bypass.
+
+In Prowlarr:
+
+```text
+Settings -> Indexers -> Add FlareSolverr
+```
+
+Use:
+
+```text
+Name: FlareSolverr
+Host: http://flaresolverr:8191
+Tags: flaresolverr
+```
+
+Then add the `flaresolverr` tag to indexers that need it.
+
+---
+
+### Radarr
+
+Open:
+
+```text
+http://<SERVER_LAN_IP>:7878
+```
+
+Add root folders:
+
+```text
+/data/media_local/movies
+/data/media_ext1/movies
+/data/media_ext2/movies
+```
+
+Add qBittorrent as download client:
+
+```text
+Settings -> Download Clients -> Add qBittorrent
+```
+
+Use:
+
+```text
+Host: qbittorrent
+Port: 8080
+Category: movies
+```
+
+---
+
+### Sonarr
+
+Open:
+
+```text
+http://<SERVER_LAN_IP>:8989
+```
+
+Add root folders:
+
+```text
+/data/media_local/tv
+/data/media_ext1/tv
+/data/media_ext2/tv
+```
+
+Add qBittorrent as download client:
+
+```text
+Settings -> Download Clients -> Add qBittorrent
+```
+
+Use:
+
+```text
+Host: qbittorrent
+Port: 8080
+Category: tv
+```
+
+---
+
+### Bazarr
+
+Open:
+
+```text
+http://<SERVER_LAN_IP>:6767
+```
+
+Connect Bazarr to Radarr and Sonarr:
+
+```text
+Radarr URL: http://radarr:7878
+Sonarr URL: http://sonarr:8989
+```
+
+Use API keys from Radarr and Sonarr.
+
+Bazarr paths should match Radarr and Sonarr paths exactly:
+
+```text
+/data/media_local
+/data/media_ext1
+/data/media_ext2
+```
+
+Add subtitle providers under:
+
+```text
+Settings -> Providers
+```
+
+---
+
+### Jellyfin
+
+Open:
+
+```text
+http://<SERVER_LAN_IP>:8096
+```
+
+Add libraries using the container paths:
+
+```text
+Movies: /data/media_local/movies
+Movies: /data/media_ext1/movies
+Movies: /data/media_ext2/movies
+
+TV:     /data/media_local/tv
+TV:     /data/media_ext1/tv
+TV:     /data/media_ext2/tv
+```
+
+---
+
+## 13. Jellyfin Hardware Transcoding
+
+The Compose file maps Intel GPU devices:
+
+```yaml
+devices:
+  - /dev/dri:/dev/dri
+```
+
+Check host GPU devices:
+
+```bash
+ls -l /dev/dri
+```
+
+In Jellyfin:
+
+```text
+Dashboard -> Playback -> Transcoding
+```
+
+Recommended options:
+
+```text
+Hardware acceleration: Intel QuickSync or VAAPI
+Enable hardware decoding for supported codecs
+Enable hardware encoding
+```
+
+Restart Jellyfin after changing transcoding settings:
+
+```bash
+docker compose restart jellyfin
+```
+
+If transcoding fails, check logs:
+
+```bash
+docker compose logs --tail=200 jellyfin | grep -Ei "vaapi|qsv|render|permission|denied|ffmpeg"
+```
+
+If `/dev/dri/renderD128` has group `render`, the Jellyfin container may need the render group added in Docker Compose.
+
+Check render group ID:
+
+```bash
+getent group render
+```
+
+---
+
+## 14. Homarr
+
+Open:
+
+```text
+http://<SERVER_LAN_IP>:7575
+```
+
+Homarr stores data in:
+
+```text
+/home/cuong/Config/Homarr
+```
+
+Docker integration requires:
+
+```yaml
+- /var/run/docker.sock:/var/run/docker.sock
+```
+
+Homarr can use app URLs such as:
+
+```text
+Jellyfin:          http://<SERVER_LAN_IP>:8096
+qBittorrent:       http://<SERVER_LAN_IP>:8080
+Radarr:            http://<SERVER_LAN_IP>:7878
+Sonarr:            http://<SERVER_LAN_IP>:8989
+Bazarr:            http://<SERVER_LAN_IP>:6767
+Prowlarr:          http://<SERVER_LAN_IP>:9696
+Speedtest Tracker: http://<SERVER_LAN_IP>:6875
+DashDot:           http://<SERVER_LAN_IP>:3001
+```
+
+For remote access through ZeroTier, use the ZeroTier IP in bookmarks:
+
+```text
+http://<SERVER_ZEROTIER_IP>:SERVICE_PORT
+```
+
+For app integrations that require API keys, generate API keys inside the target app and paste them into Homarr.
+
+Jellyfin integration usually requires Jellyfin authorization. A `401 Unauthorized` response means Homarr can reach Jellyfin, but the Jellyfin credentials or API key are wrong.
+
+---
+
+## 15. Speedtest Tracker
+
+Open:
+
+```text
+http://<SERVER_LAN_IP>:6875
+```
+
+Required `.env` values:
+
+```env
+SPEEDTEST_APP_KEY=base64:your_generated_key
+SPEEDTEST_APP_URL=http://<SERVER_LAN_IP>:6875
+```
+
+Generate key:
+
+```bash
+echo -n 'base64:'; openssl rand -base64 32
+```
+
+Speedtest Tracker config path:
+
+```text
+/home/cuong/Config/speedtest-tracker
+```
+
+Default schedule:
+
+```text
+0 */6 * * *
+```
+
+This runs every 6 hours.
+
+To list available Speedtest servers:
 
 ```bash
 docker run -it --rm --entrypoint /bin/bash lscr.io/linuxserver/speedtest-tracker:latest list-servers
 ```
 
-Security note: I would not expose DashDot or Speedtest Tracker directly to the internet. DashDot runs privileged and can read host-level system information through `/:/mnt/host:ro`, so keep it LAN-only, behind VPN, or behind a reverse proxy with authentication and HTTPS.
+If `SPEEDTEST_SERVERS` is empty, Speedtest Tracker chooses automatically.
 
-[1]: https://getdashdot.com/docs/installation/docker-compose "Docker-Compose"
-[2]: https://docs.speedtest-tracker.dev/getting-started/installation/using-docker-compose "Using Docker Compose | Speedtest Tracker"
-[3]: https://docs.linuxserver.io/images/docker-speedtest-tracker/ "speedtest-tracker - LinuxServer.io"
+---
+
+## 16. DashDot
+
+Open:
+
+```text
+http://<SERVER_LAN_IP>:3001
+```
+
+DashDot uses:
+
+```yaml
+privileged: true
+volumes:
+  - /:/mnt/host:ro
+```
+
+CPU temperature monitoring is enabled:
+
+```yaml
+DASHDOT_ENABLE_CPU_TEMPS: 'true'
+```
+
+Security note: DashDot can read host system information. Keep it LAN-only or accessible only through ZeroTier/VPN.
+
+---
+
+## 17. ZeroTier
+
+Install ZeroTier:
+
+```bash
+curl -s https://install.zerotier.com | sudo bash
+```
+
+Join network:
+
+```bash
+sudo zerotier-cli join NETWORK_ID
+```
+
+Check status:
+
+```bash
+sudo zerotier-cli status
+sudo zerotier-cli listnetworks
+```
+
+Current ZeroTier server IP:
+
+```text
+<SERVER_ZEROTIER_IP>
+```
+
+Use this IP when accessing services remotely through ZeroTier.
+
+Optional: enable Linux routing through ZeroTier.
+
+Enable IP forwarding:
+
+```bash
+sudo nano /etc/sysctl.conf
+```
+
+Set:
+
+```text
+net.ipv4.ip_forward=1
+```
+
+Apply:
+
+```bash
+sudo sysctl -p
+```
+
+Example iptables rules:
+
+```bash
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i zt+ -o eth0 -j ACCEPT
+```
+
+Persist rules:
+
+```bash
+sudo apt install -y iptables-persistent
+```
+
+Only enable routing if the server is intended to route traffic for other ZeroTier devices.
+
+---
+
+## 18. USB Drive Disconnect Fix: Disable UAS
+
+Some USB HDD enclosures, especially JMicron-based boxes, can disconnect under load when using UAS.
+
+Symptoms:
+
+```text
+USB disconnect
+I/O error
+drive disappears from df -h
+mount point becomes unavailable
+```
+
+Check device ID:
+
+```bash
+lsusb
+```
+
+Example:
+
+```text
+ID 152d:0578 JMicron Technology Corp. JMS578 SATA 6Gb/s
+```
+
+Create UAS disable config:
+
+```bash
+echo "options usb-storage quirks=152d:0578:u" | sudo tee /etc/modprobe.d/disable_uas.conf
+```
+
+Replace `152d:0578` with the real device ID.
+
+Update initramfs and reboot:
+
+```bash
+sudo update-initramfs -u
+sudo reboot
+```
+
+Verify:
+
+```bash
+lsusb -t
+```
+
+Expected result:
+
+```text
+Driver=usb-storage
+```
+
+instead of:
+
+```text
+Driver=uas
+```
+
+Useful drive commands:
+
+```bash
+lsblk
+df -h
+sudo mount -a
+sudo dmesg -T | tail -n 50
+sudo umount -l /mnt/external
+sudo fsck -y /dev/sdX1
+```
+
+Only run `fsck` on an unmounted filesystem.
+
+---
+
+## 19. Network Speed Test with iperf3
+
+Install iperf3:
+
+```bash
+sudo apt install -y iperf3
+```
+
+On the server:
+
+```bash
+iperf3 -s
+```
+
+On another machine:
+
+```bash
+iperf3 -c <SERVER_LAN_IP>
+```
+
+Check Ethernet link speed:
+
+```bash
+sudo ethtool eth0 | grep Speed
+```
+
+Replace `eth0` with the real interface name.
+
+---
+
+## 20. Updating Containers
+
+Update all containers:
+
+```bash
+cd ~/mediaserver-setup
+docker compose pull
+docker compose up -d
+```
+
+Remove unused Docker images:
+
+```bash
+docker image prune -f
+```
+
+Check status:
+
+```bash
+docker compose ps
+```
+
+Check logs:
+
+```bash
+docker compose logs --tail=200
+```
+
+---
+
+## 21. Backup
+
+Back up all app configs:
+
+```bash
+sudo tar -czf mediaserver-config-backup-$(date +%F-%H%M%S).tar.gz /home/cuong/Config
+```
+
+Back up Homarr only:
+
+```bash
+sudo tar -czf homarr-backup-$(date +%F-%H%M%S).tar.gz /home/cuong/Config/Homarr
+```
+
+Back up Compose project:
+
+```bash
+tar -czf mediaserver-compose-backup-$(date +%F-%H%M%S).tar.gz ~/mediaserver-setup
+```
+
+Store backups outside the server if possible.
+
+---
+
+## 22. Disk Clone Warning
+
+Cloning disks with `dd` is dangerous. Verify drive names first:
+
+```bash
+lsblk
+```
+
+Stop containers:
+
+```bash
+cd ~/mediaserver-setup
+docker compose down
+```
+
+Unmount the source or target if needed:
+
+```bash
+sudo umount /mnt/external
+```
+
+Example clone:
+
+```bash
+sudo dd if=/dev/sdb of=/dev/sdc bs=64K conv=noerror,sync status=progress
+```
+
+Be absolutely sure `if=` is the source disk and `of=` is the destination disk.
+
+---
+
+## 23. Troubleshooting Checklist
+
+Check containers:
+
+```bash
+docker compose ps
+```
+
+Check ports:
+
+```bash
+docker port homarr
+sudo ss -tulpn | grep 7575
+```
+
+Check logs for errors:
+
+```bash
+docker compose logs --tail=300 | grep -Ei "permission|denied|not writable|read-only|readonly|database is locked|sqlite|error|fatal"
+```
+
+Check one container:
+
+```bash
+docker compose logs --tail=100 SERVICE_NAME
+```
+
+Check permissions:
+
+```bash
+sudo stat -c '%n -> owner=%U:%G uid:gid=%u:%g perms=%A %a' /path/to/check
+```
+
+Check whether a service can write to a mounted folder:
+
+```bash
+touch /mnt/external/test-permission && rm /mnt/external/test-permission
+```
+
+Check Docker socket:
+
+```bash
+sudo stat -c '%n -> owner=%U:%G uid:gid=%u:%g perms=%A %a' /var/run/docker.sock
+```
+
+Check Homarr Docker socket inside the container:
+
+```bash
+docker exec -it homarr id
+docker exec -it homarr ls -l /var/run/docker.sock
+```
+
+Common issues:
+
+| Problem                     | Likely Cause                           | Fix                                                |
+| --------------------------- | -------------------------------------- | -------------------------------------------------- |
+| `ERR_CONNECTION_REFUSED`    | Container exited or port not published | `docker compose ps`, `docker compose logs SERVICE` |
+| `401 Unauthorized`          | Wrong API key or credentials           | Recreate API key in target app                     |
+| Permission denied           | Wrong UID/GID or chmod                 | `chown 1000:1000`, `chmod 775`                     |
+| Homarr cannot see Docker    | Docker socket group mismatch           | Check `getent group docker`, set `DOCKER_GID`      |
+| Radarr/Sonarr cannot import | Path mismatch                          | Use identical `/data/...` paths in all apps        |
+| Prowlarr indexer timeout    | Indexer/network problem                | Test indexer, use FlareSolverr if needed           |
+| Jellyfin transcoding fails  | GPU permission or codec issue          | Check `/dev/dri`, Jellyfin logs                    |
+
+---
+
+## 24. Security Notes
+
+Do not expose these services directly to the public internet unless you know what you are doing:
+
+```text
+qBittorrent
+Radarr
+Sonarr
+Bazarr
+Prowlarr
+Homarr
+DashDot
+Speedtest Tracker
+```
+
+Safer access methods:
+
+```text
+LAN only
+ZeroTier
+VPN
+Reverse proxy with HTTPS and authentication
+```
+
+DashDot runs privileged and can read host system information.
+
+Homarr with Docker socket access can interact with Docker. Treat it as sensitive.
+
+qBittorrent should always have a strong password.
+
+Change default credentials after first login for any app that provides defaults.
+
+---
+
+## 25. Quick Command Reference
+
+Start:
+
+```bash
+docker compose up -d
+```
+
+Stop:
+
+```bash
+docker compose down
+```
+
+Restart one service:
+
+```bash
+docker compose restart jellyfin
+```
+
+Logs:
+
+```bash
+docker compose logs -f jellyfin
+```
+
+Update:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Status:
+
+```bash
+docker compose ps
+```
+
+Shell into container:
+
+```bash
+docker exec -it container_name bash
+```
+
+Check disk usage:
+
+```bash
+df -h
+du -sh /home/cuong/Config/*
+```
+
+Check mounts:
+
+```bash
+lsblk
+findmnt
+```
+
+Check recent system logs:
+
+```bash
+sudo dmesg -T | tail -n 100
+```
+
+---
+
+## 26. Current Path Summary
+
+Host paths:
+
+```text
+/home/cuong/Config/Jellyfin
+/home/cuong/Config/qbittorrent
+/home/cuong/Config/Radarr
+/home/cuong/Config/Sonarr
+/home/cuong/Config/Bazarr
+/home/cuong/Config/prowlarr
+/home/cuong/Config/speedtest-tracker
+/home/cuong/Config/Homarr
+
+/home/cuong/Data/Torrents
+/mnt/external
+/mnt/external2
+```
+
+Container paths:
+
+```text
+/config
+/data/media_local
+/data/media_ext1
+/data/media_ext2
+/appdata
+```
+
+Use container paths inside apps. Use host paths only in Docker Compose and Linux shell commands.
