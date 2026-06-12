@@ -43,7 +43,6 @@ mediaserver-setup/
 ├── docker-compose.yml
 ├── .env
 ├── README.md
-└── setup_media_dirs.sh
 ```
 
 Main persistent config path:
