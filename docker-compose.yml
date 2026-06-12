@@ -150,11 +150,9 @@ services:
     restart: unless-stopped
     environment:
       - PUID=1000
-      - PGID=1000
+      - PGID=987
       - TZ=Asia/Ho_Chi_Minh
       - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_KEY}
-    group_add:
-      - "${DOCKER_GID}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /home/cuong/Config/Homarr:/appdata
