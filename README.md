@@ -769,59 +769,6 @@ TV:     /data/media_ext1/tv
 TV:     /data/media_ext2/tv
 ```
 
----
-
-## 13. Jellyfin Hardware Transcoding
-
-The Compose file maps Intel GPU devices:
-
-```yaml
-devices:
-  - /dev/dri:/dev/dri
-```
-
-Check host GPU devices:
-
-```bash
-ls -l /dev/dri
-```
-
-In Jellyfin:
-
-```text
-Dashboard -> Playback -> Transcoding
-```
-
-Recommended options:
-
-```text
-Hardware acceleration: Intel QuickSync or VAAPI
-Enable hardware decoding for supported codecs
-Enable hardware encoding
-```
-
-Restart Jellyfin after changing transcoding settings:
-
-```bash
-docker compose restart jellyfin
-```
-
-If transcoding fails, check logs:
-
-```bash
-docker compose logs --tail=200 jellyfin | grep -Ei "vaapi|qsv|render|permission|denied|ffmpeg"
-```
-
-If `/dev/dri/renderD128` has group `render`, the Jellyfin container may need the render group added in Docker Compose.
-
-Check render group ID:
-
-```bash
-getent group render
-```
-
----
-
 ## 14. Homarr
 
 Open:
