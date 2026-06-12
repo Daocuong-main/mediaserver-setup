@@ -307,3 +307,76 @@ UUID=efcf16bd-c481-4bed-8675-492145522416  /mnt/external2  ext4  defaults,nofail
 ---
 
 *Tài liệu này giúp hệ thống Media Server (Jellyfin, qBittorrent, *Arr) của bạn hoạt động bền bỉ, tránh tình trạng mất dữ liệu giữa chừng.*
+
+
+# Dashdot and speedtest tracker
+Yes, but only a few checks.
+
+Your `dashdot` service is basically ready after:
+
+```bash
+docker compose up -d
+```
+
+It maps DashDot to:
+
+```text
+http://SERVER-IP:3001
+```
+
+Your config matches the official DashDot Docker Compose pattern: `privileged: true`, host root mounted read-only at `/mnt/host`, and port `3001:3001`. CPU temps are also enabled with `DASHDOT_ENABLE_CPU_TEMPS: 'true'`.  DashDot’s own Compose docs show the same core requirements: privileged mode, `/:/mnt/host:ro`, and optional environment config such as CPU temperatures. ([getdashdot.com][1])
+
+For `speedtest-tracker`, you do need to make sure the `.env` variables exist before relying on it:
+
+```env
+SPEEDTEST_APP_KEY=base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+SPEEDTEST_APP_URL=http://SERVER-IP:6875
+```
+
+Generate the key with:
+
+```bash
+echo -n 'base64:'; openssl rand -base64 32
+```
+
+The Speedtest Tracker docs say `APP_KEY` is required for encryption and `APP_URL` is required; your compose references them as `${SPEEDTEST_APP_KEY}` and `${SPEEDTEST_APP_URL}`.  ([docs.speedtest-tracker.dev][2])
+
+After it starts, open:
+
+```text
+http://SERVER-IP:6875
+```
+
+Default login is:
+
+```text
+admin@example.com
+password
+```
+
+Change that immediately after first login. LinuxServer’s docs list those default credentials and confirm that `/config` stores the app config and SQLite database. ([docs.linuxserver.io][3])
+
+Also check permissions for the Speedtest Tracker config directory:
+
+```bash
+sudo mkdir -p /home/cuong/Config/speedtest-tracker
+sudo chown -R 1000:1000 /home/cuong/Config/speedtest-tracker
+```
+
+Your schedule is already set to run every 6 hours:
+
+```yaml
+SPEEDTEST_SCHEDULE=0 */6 * * *
+```
+
+That is fine. Leaving `SPEEDTEST_SERVERS=` empty is also acceptable unless you want to force a specific Ookla server. The LinuxServer docs say server IDs can be listed with:
+
+```bash
+docker run -it --rm --entrypoint /bin/bash lscr.io/linuxserver/speedtest-tracker:latest list-servers
+```
+
+Security note: I would not expose DashDot or Speedtest Tracker directly to the internet. DashDot runs privileged and can read host-level system information through `/:/mnt/host:ro`, so keep it LAN-only, behind VPN, or behind a reverse proxy with authentication and HTTPS.
+
+[1]: https://getdashdot.com/docs/installation/docker-compose "Docker-Compose"
+[2]: https://docs.speedtest-tracker.dev/getting-started/installation/using-docker-compose "Using Docker Compose | Speedtest Tracker"
+[3]: https://docs.linuxserver.io/images/docker-speedtest-tracker/ "speedtest-tracker - LinuxServer.io"
