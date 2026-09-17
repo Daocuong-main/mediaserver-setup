@@ -10,10 +10,8 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - /home/cuong/Config/Jellyfin:/config
-      # --- CẤU HÌNH CHUẨN ---
-      - /home/cuong/Data/Torrents:/data/media_local
-      - /mnt/external:/data/media_ext1
-      - /mnt/external2:/data/media_ext2
+      # Single pool mount replaces media_ext1, media_ext2, etc.
+      - /mnt/media_pool:/data
     ports:
       - 8096:8096
     restart: always
@@ -28,10 +26,8 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - /home/cuong/Config/qbittorrent:/config
-      # Map full cả 3 ổ để tải đâu cũng được
-      - /home/cuong/Data/Torrents:/data/media_local
-      - /mnt/external:/data/media_ext1
-      - /mnt/external2:/data/media_ext2
+      # Downloads will go through the pool seamlessly
+      - /mnt/media_pool:/data
     ports:
       - 8080:8080
       - 6881:6881
@@ -47,9 +43,7 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Radarr:/config
-      - /home/cuong/Data/Torrents:/data/media_local
-      - /mnt/external:/data/media_ext1
-      - /mnt/external2:/data/media_ext2
+      - /mnt/media_pool:/data
     ports:
       - 7878:7878
     restart: always
@@ -63,9 +57,7 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Sonarr:/config
-      - /home/cuong/Data/Torrents:/data/media_local
-      - /mnt/external:/data/media_ext1
-      - /mnt/external2:/data/media_ext2
+      - /mnt/media_pool:/data
     ports:
       - 8989:8989
     restart: always
@@ -79,10 +71,7 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Bazarr:/config
-      # --- ĐÃ SỬA LẠI CHO ĐÚNG ---
-      - /home/cuong/Data/Torrents:/data/media_local
-      - /mnt/external:/data/media_ext1
-      - /mnt/external2:/data/media_ext2
+      - /mnt/media_pool:/data
     ports:
       - 6767:6767
     restart: always
