@@ -10,8 +10,7 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - /home/cuong/Config/Jellyfin:/config
-      # Single pool mount replaces media_ext1, media_ext2, etc.
-      - /mnt/media_pool:/data
+      - /mnt/media_pool/media:/data/media
     ports:
       - 8096:8096
     restart: always
@@ -26,7 +25,6 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - /home/cuong/Config/qbittorrent:/config
-      # Downloads will go through the pool seamlessly
       - /mnt/media_pool:/data
     ports:
       - 8080:8080
@@ -71,11 +69,11 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/cuong/Config/Bazarr:/config
-      - /mnt/media_pool:/data
+      - /mnt/media_pool/media:/data/media
     ports:
       - 6767:6767
     restart: always
-    
+
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
