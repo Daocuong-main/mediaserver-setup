@@ -113,3 +113,20 @@ services:
       - /home/cuong/Config/Homarr:/appdata
     ports:
       - 7575:7575
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:latest
+    container_name: syncthing
+    hostname: ubuntu-mediaserver
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - /home/cuong/Config/Syncthing:/config
+      - /mnt/media_pool:/data
+    ports:
+      - 8384:8384   # Web UI
+      - 22000:22000/tcp # Sync protocol
+      - 22000:22000/udp # Sync protocol
+      - 21027:21027/udp # Local discovery
+    restart: unless-stopped
