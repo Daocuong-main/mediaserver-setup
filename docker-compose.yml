@@ -25,7 +25,8 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - /home/cuong/Config/qbittorrent:/config
-      - /mnt/media_pool:/data
+      - /home/cuong/Data/Torrents:/data/ssd_scratch   # Fast SSD for incomplete torrents
+      - /mnt/media_pool:/data/media_pool             # MergerFS pool for completed files
     ports:
       - 8080:8080
       - 6881:6881
