@@ -25,7 +25,7 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - /home/cuong/Config/qbittorrent:/config
-      - /home/cuong/Data/Torrents:/data/ssd_scratch
+      - /home/cuong/Data/Torrents/incomplete:/incomplete
       - /mnt/media_pool:/data
     ports:
       - 8080:8080
@@ -114,6 +114,7 @@ services:
       - /home/cuong/Config/Homarr:/appdata
     ports:
       - 7575:7575
+
   syncthing:
     image: lscr.io/linuxserver/syncthing:latest
     container_name: syncthing
